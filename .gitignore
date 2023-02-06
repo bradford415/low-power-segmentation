@@ -1,0 +1,6 @@
+# Ignore datasets used for this project (this should ignore everything called data in any directory)
+data
+
+# Ignore output files (segmentation results) except for gitkeep
+output
+!output/.gitkeep
