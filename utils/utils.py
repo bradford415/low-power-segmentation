@@ -1,5 +1,4 @@
 """Helper functions for the model
- 
 """
 import math
 import random
@@ -68,21 +67,10 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     FOR THE IMAGE AND LABEL. It is shown here how to do this:
     https://discuss.pytorch.org/t/torchvision-transfors-how-to-perform-identical-transform-on-both-image-and-target/10606/7
     
-    The preprocessing protocol is defined by the original protocol of deeplab.
-    The idea behind horizontal flipping is that an object should be equally
-    identifiable if it were reversed, however that is not the same for vertical
-    flipping. This same idea applies scaling and random cropping.
+    The mean and standard deviation from the ImageNet dataset are used because we pretrain
+    deeplab on ImageNet.
 
-    Finally, normalizing an image based on the mean and standard deviation of 
-    the original dataset is common practice. If you are using pretrained weights
-    for a network, you want to normalize your dataset using the values from the
-    original dataset. In most cases it will be the ImageNet dataset as that is
-    what most networks are pretrained on. First, normalize your dataset from 0-1 
-    (ToTensor()), and then again normalize it using the mean and std dev for each 
-    channel (Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]))
-    The mean and standard deviation are given from the ImageNet dataset.
-
-    Training applies crop, flip, resize, and nromalize
+    Training applies crop, flip, resize, and normalization
     """
     if flip:
         if random.random() < 0.5:
