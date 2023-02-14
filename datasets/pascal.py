@@ -56,6 +56,7 @@ class VOCSegmentation(Dataset):
                 assert os.path.isfile(_mask)
                 self.images.append(_image)
                 self.masks.append(_mask)
+        self.num_samples = len(self.images)
 
     def __getitem__(self, index):
         _img = Image.open(self.images[index]).convert('RGB')

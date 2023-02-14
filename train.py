@@ -87,6 +87,9 @@ def train():
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
 
+    print(f'Number of train samples: {dataset_train.num_samples}')
+    print(f'Number of validation samples: {dataset_val.num_samples}')
+
     # In this case, getattr() is calling a function from deeplab.py file to return the model
     # and the following parenthesis pass arguments to this 'resnet101' function
     # I am not sure the advantage over this rather than just calling the function itself
@@ -189,6 +192,7 @@ def train():
             loss.backward()
             optimizer.step()
 
+        ###################### Start here, go through this function and then save best miou and last epoch
         # Evaluate epoch
         model.eval()
         inter_meter = AverageMeter()  

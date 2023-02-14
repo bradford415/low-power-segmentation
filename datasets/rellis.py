@@ -28,6 +28,7 @@ class Rellis3D(Dataset):
         dataset_split = 'train' if self.train else 'test'
         self.images = self._get_files(dataset_split, 'rgb')
         self.masks = self._get_files(dataset_split, 'id')
+        self.num_samples = len(self.images)
         assert len(self.images) == len(self.masks)
 
         self.color_map = [

@@ -23,6 +23,7 @@ class Cityscapes(Dataset):
     dataset_split = 'train' if self.train else 'val' # Cityscapes does not have a public test set
     self.images = self._get_files(dataset_split, 'leftImg8bit')
     self.masks = self._get_files(dataset_split, 'gtFine')
+    self.num_samples = len(self.images)
 
   def __getitem__(self, index):
     _img = Image.open(self.images[index]).convert('RGB')
