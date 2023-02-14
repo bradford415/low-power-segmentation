@@ -32,10 +32,15 @@ class AverageMeter(object):
         self.initialized = True
 
     def add(self, val, n):
-        self.val = val
-        self.sum += val * n # count of pixels per class (used for intersection and union)
-        self.count += n # n = number of images being passed into AverageMeter (usually always 1)
-        self.avg = self.sum / self.count
+        """
+        params:
+            val: loss value of each mini-batch
+            n: batch size
+        """
+        self.val = val 
+        self.sum += val * n # estimates loss per sample
+        self.count += n 
+        self.avg = self.sum / self.count # average loss per epoch
         self.ema = self.ema * 0.99 + self.val * 0.01
 
 

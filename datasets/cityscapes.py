@@ -5,21 +5,6 @@ import glob
 from PIL import Image
 from utils import preprocess
 
-_FOLDERS_MAP = {
-    'image': 'leftImg8bit',
-    'label': 'gtFine',
-}
-
-_POSTFIX_MAP = {
-    'image': '_leftImg8bit',
-    'label': '_gtFine_labelTrainIds',
-}
-
-_DATA_FORMAT_MAP = {
-    'image': 'png',
-    'label': 'png',
-}
-
 
 class Cityscapes(Dataset):
   CLASSES = [
@@ -35,9 +20,9 @@ class Cityscapes(Dataset):
     self.train = train
     self.crop_size = crop_size
 
-    dataset_split = 'train' if self.train else 'val'
-    self.images = self._get_files('image', dataset_split)
-    self.masks = self._get_files('label', dataset_split)
+    dataset_split = 'train' if self.train else 'val' # Cityscapes does not have a public test set
+    self.images = self._get_files(dataset_split, 'leftImg8bit')
+    self.masks = self._get_files(dataset_split, 'gtFine')
 
   def __getitem__(self, index):
     _img = Image.open(self.images[index]).convert('RGB')
@@ -56,11 +41,11 @@ class Cityscapes(Dataset):
 
     return _img, _target
 
-  def _get_files(self, data, dataset_split):
-    pattern = '*%s.%s' % (_POSTFIX_MAP[data], _DATA_FORMAT_MAP[data])
-    search_files = os.path.join(
-        self.root, _FOLDERS_MAP[data], dataset_split, '*', pattern)
-    filenames = glob.glob(search_files)
+  def _get_files(self, dataset_split, data_type):
+    dataset_path = os.path.join(self.root, data_type, dataset_split)
+    
+    file_ending = 'labelTrainIds.png' if data_type == 'gtFine' else 'leftImg8bit.png'
+    filenames = glob.glob(f'{self.root}/{data_type}/{dataset_split}/*/*{file_ending}')
     return sorted(filenames)
 
   def __len__(self):

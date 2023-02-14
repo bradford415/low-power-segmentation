@@ -4,6 +4,7 @@ File to test and evaluate segmentation models
 """
 import argparse
 import os
+import yaml
 import numpy as np
 import torch
 import torch.nn as nn
@@ -15,10 +16,11 @@ from PIL import Image
 from pathlib import Path
 
 # Import local files
-import deeplabv3
+from networks import deeplabv3
 from utils import AverageMeter, inter_and_union
-from pascal import VOCSegmentation
-from cityscapes import Cityscapes
+from datasets import VOCSegmentation
+from datasets import Cityscapes
+from datasets import Rellis3D
 
 
 parser = argparse.ArgumentParser()
@@ -37,7 +39,7 @@ def test():
     torch.backends.cudnn.benchmark = cfg['cudnn']['benchmark']
     use_cuda = torch.cuda.is_available()
     device = torch.device('cuda' if use_cuda else 'cpu')
-    test_kwargs = {'batch_size': args.batch_size,
+    test_kwargs = {'batch_size': cfg['test']['batch_size'],
                    'shuffle': False}  # val and test
     if use_cuda:
         cuda_kwargs = {'num_workers': cfg['workers'],
@@ -47,33 +49,33 @@ def test():
     # File and dir name to save checkpoints
     # Model checkpoints are saved w/ this naming convention during training
     model_dirname = 'deeplabv3_{0}_{1}_{2}'.format(
-        args.backbone, args.dataset, args.experiment)
+        cfg['model']['backbone'], cfg['dataset']['dataset'], args.cfg)
     model_fname = 'deeplabv3_{0}_{1}_{2}_epoch%d.pth'.format(
-        args.backbone, args.dataset, args.experiment)
+        cfg['model']['backbone'], cfg['dataset']['dataset'], args.cfg)
     model_path = os.path.join('output', model_dirname)
     model_fpath = os.path.join('output', model_dirname, model_fname)
     Path(model_path).mkdir(parents=True, exist_ok=True)
 
     # Crop size is currently hard coded but can be changed to use args.crop_size
-    if args.dataset == 'pascal':
+    if cfg['dataset']['dataset'] == 'pascal':
         dataset = VOCSegmentation('data/pascal',
-                                  train=args.train, crop_size=513)#crop_size=args.crop_size)
-    elif args.dataset == 'cityscapes':
+                                  train=False, crop_size=513)#crop_size=args.crop_size)
+    elif cfg['dataset']['dataset'] == 'cityscapes':
         dataset = Cityscapes('data/cityscapes',
-                             train=args.train, crop_size=769)#crop_size=args.crop_size)
-    elif args.dataset == 'rellis':
+                             train=False, crop_size=769)#crop_size=args.crop_size)
+    elif cfg['dataset']['dataset'] == 'rellis':
         dataset = Rellis3D('data/rellis',
-                             train=args.train, crop_size=721)#crop_size=args.crop_size)
+                             train=False, crop_size=721)#crop_size=args.crop_size)
     else:
-        raise ValueError('Unknown dataset: {}'.format(args.dataset))
+        raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
 
-    if args.backbone == 'resnet101':
+    if cfg['model']['backbone'] == 'resnet101':
         model = getattr(deeplabv3, 'create_resnet101')(
             pretrained=(not args.scratch),
             device=device,
             num_classes=len(dataset.CLASSES))
     else:
-        raise ValueError('Unknown backbone: {}'.format(args.backbone))
+        raise ValueError('Unknown backbone: {}'.format(cfg['model']['backbone']))
 
     model = model.to(device)
 
@@ -88,14 +90,14 @@ def test():
                 v in checkpoint['model'].items() if 'tracked' not in k}
     # Do not need to load optimizer state_dict because it is not used for inference
     model.load_state_dict(state_dict)
-    if args.dataset == 'pascal':
+    if cfg['dataset']['dataset'] == 'pascal':
         cmap = loadmat('data/pascal/pascal_seg_colormap.mat')['colormap']
         cmap = (cmap * 255).astype(np.uint8).flatten().tolist()
-    elif args.dataset == 'rellis':
+    elif cfg['dataset']['dataset'] == 'rellis':
         cmap = np.array(dataset.color_map).flatten().tolist()
     else:
         raise ValueError(
-            'Unknown colormap for dataset: {}'.format(args.dataset))
+            'Unknown colormap for dataset: {}'.format(cfg['dataset']['dataset']))
 
     dataset_loader = torch.utils.data.DataLoader(dataset, **test_kwargs)
 

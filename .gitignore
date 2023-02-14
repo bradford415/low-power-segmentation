@@ -2,6 +2,7 @@ __pycache__/
 
 # Ignore datasets used for this project (this should ignore everything (files and folders) called data in any directory)
 data
+!.gitkeep
 
 # Ignore output files (segmentation results) except for gitkeep
 output

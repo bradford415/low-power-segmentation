@@ -265,11 +265,10 @@ def create_resnet101(pretrained=False, device='cpu', **kwargs):
     """
     model = ResNet(BottleNeck, [3, 4, 23, 3], **kwargs)
     if pretrained:
-        # A model's state dictionary maps each layer to its parameter tensor
         # Only layers that have learnable parameters have entries in the dictionary
         model_dict = model.state_dict()
-        # Download pre-trained resnet101 model from PyTorch and get its state_dict()
-        resnet101 = models.resnet101(pretrained=True)
+        # Download pre-trained resnet101 model from PyTorch and extract its state_dict()
+        resnet101 = models.resnet101(weights='ResNet101_Weights.DEFAULT')
         pretrained_dict = resnet101.state_dict()
         # Filter out unncessary keys - only return parameters from the pre-trained
         # ResNet that matches our ResNet 
@@ -277,7 +276,6 @@ def create_resnet101(pretrained=False, device='cpu', **kwargs):
         # might not be necessary, maybe can just pass overlay_dict to load_state_dict()
         model_dict.update(overlap_dict) 
         model.load_state_dict(model_dict) # Load pre-trained weights
-        # torch.load did not work and im not sure of another way to map location 
 
     return model
 
