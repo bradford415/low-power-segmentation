@@ -268,7 +268,7 @@ def create_resnet101(pretrained=False, device='cpu', **kwargs):
         # Only layers that have learnable parameters have entries in the dictionary
         model_dict = model.state_dict()
         # Download pre-trained resnet101 model from PyTorch and extract its state_dict()
-        resnet101 = models.resnet101(weights='ResNet101_Weights.DEFAULT')
+        resnet101 = models.resnet101(weights='ResNet101_Weights.IMAGENET1K_V2')
         pretrained_dict = resnet101.state_dict()
         # Filter out unncessary keys - only return parameters from the pre-trained
         # ResNet that matches our ResNet 

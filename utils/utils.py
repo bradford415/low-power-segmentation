@@ -9,6 +9,7 @@ from PIL import Image
 
 
 class AverageMeter(object):
+    """Stores loss and intersectin/union pixel values"""
     def __init__(self):
         self.val = None
         self.sum = None
@@ -45,6 +46,7 @@ class AverageMeter(object):
 
 
 def inter_and_union(pred, mask, num_class):
+    # Explanation of this at: https://github.com/bradford415/deeplabv3-pytorch/blob/main/utils.py
     pred = np.asarray(pred, dtype=np.uint8).copy()
     mask = np.asarray(mask, dtype=np.uint8).copy()
 

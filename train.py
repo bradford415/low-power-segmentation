@@ -46,7 +46,7 @@ def train():
     use_cuda = torch.cuda.is_available()
     device = torch.device('cuda' if use_cuda else 'cpu')
     train_kwargs = {'batch_size': cfg['train']['batch_size'], 'shuffle': cfg['train']['shuffle']}
-    val_kwargs = {'batch_size': cfg['test']['batch_size'], 'shuffle': ['train']['shuffle']}  # val and test
+    val_kwargs = {'batch_size': cfg['test']['batch_size'], 'shuffle': cfg['train']['shuffle']}  # val and test
     
     if use_cuda:
         print(f"\nUsing GPU(s): {torch.cuda.get_device_name(cfg['gpus'])}\n")
@@ -71,17 +71,17 @@ def train():
     # Create Train and validation dataset (validation to test accuracy after every epoch)
     if cfg['dataset']['dataset'] == 'pascal':
         dataset_train = VOCSegmentation('data/pascal',
-                                        train=False, crop_size=513)
+                                        train=True, crop_size=cfg['train']['crop_size'])
         dataset_val = VOCSegmentation('data/pascal',
                                       train=False)
     elif cfg['dataset']['dataset'] == 'cityscapes':
         dataset_train = Cityscapes(cfg['dataset']['root'],
-                                   train=False)
+                                   train=True, crop_size=cfg['train']['crop_size'])
         dataset_val = Cityscapes(cfg['dataset']['root'],
                                  train=False)
     elif cfg['dataset']['dataset'] == 'rellis':
         dataset_train = Rellis3D('data/rellis',
-                           train=True, crop_size=721)
+                           train=True, crop_size=cfg['train']['crop_size'])
         dataset_val = Rellis3D('data/rellis',
                            train=False)
     else:
@@ -166,6 +166,7 @@ def train():
     print('Training...\n')
     start_epoch = cfg['train']['start_epoch']
     end_epoch = cfg['train']['end_epoch']
+    best_miou = 0.0 
     for epoch in range(start_epoch, end_epoch):
         print(f'Epoch {epoch+1}: ')
         model.train()
@@ -198,12 +199,11 @@ def train():
         inter_meter = AverageMeter()  
         union_meter = AverageMeter()
         print('Evaluating on validation set...')
-        with torch.inference_mode:
+        with torch.inference_mode():
             for index, (data, target) in enumerate(loader_val):
                 data, target = data.to(device), target.to(device)
                 outputs = model(data)
                 _, pred = torch.max(outputs, 1)
-                # move data back to cpu to use numpy
                 Path(os.path.join(model_path, 'inference')).mkdir(
                     parents=True, exist_ok=True)
                 inter, union = inter_and_union(
@@ -213,7 +213,22 @@ def train():
                 inter_meter.update(inter)
                 union_meter.update(union)
 
-        print(f'epoch: {epoch+1}\t average loss: {losses.avg}')
+        iou = inter_meter.sum / (union_meter.sum + 1e-10) # Calculate IoU for each class
+        miou = iou.mean
+
+        # Save model with best mIoU
+        if miou > best_miou:
+            best_miou = miou
+            best_miou_name = f'{model_fname}_best-miou_{best_miou*100:.2}'
+            torch.save({
+                'epoch': epoch + 1, # +1 because when loading a checkpoint you want to start at the next epoch
+                'model': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+            }, best_miou_name)
+            
+            os.remove(f'{model_fname}-best-miou*')
+            
+        print(f'epoch: {epoch+1}\t mIoU: {miou}\t average loss: {losses.avg}')
         # Save a checkpoint every 10 epochs
         if epoch % 10 == 9:
             torch.save({
@@ -221,8 +236,6 @@ def train():
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, model_fpath % (epoch + 1))
-    
-
 
 
 if __name__ == '__main__':

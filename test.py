@@ -128,7 +128,7 @@ def test():
             inter_meter.update(inter)
             union_meter.update(union)
 
-        iou = inter_meter.sum / (union_meter.sum + 1e-10)
+        iou = inter_meter.sum / (union_meter.sum + 1e-10) # 1e-10 is used to prevent division by 0 I think
         # Print and save IoU per class and final mIoU score
         with open(os.path.join(model_path, 'metrics.txt'), 'w') as file:
             for i, val in enumerate(iou):
