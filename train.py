@@ -66,10 +66,8 @@ def train():
     model_fname = 'model'
     model_path = os.path.join('output', model_dirname)
     model_fpath = os.path.join('output', model_dirname, model_fname)
-    print(model_path)
-    print(model_fpath)
     Path(model_path).mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(args.cfg, f"{model_dirname}_{config_name}")
+    shutil.copyfile(args.cfg, f"{model_path}/{args.cfg.split('/')[-1]}")
 
     # Create Train and validation dataset (validation to test accuracy after every epoch)
     if cfg['dataset']['dataset'] == 'pascal':
@@ -179,7 +177,7 @@ def train():
             lr = cfg['train']['base_lr'] * \
                 (1 - float(current_iteration) / max_iterations) ** 0.9
             # Update lr for [0] backbone and [1] aspp
-            optimizer.param_groups[0]['lr'] = lr  
+            optimizer.param_groups[0]['lr'] = lr
             optimizer.param_groups[1]['lr'] = lr * cfg['train']['last_mult'] # LR multiplier for last layers
 
             # Put tensors on a gpu
@@ -233,14 +231,14 @@ def train():
         # Save model with best mIoU
         if miou > best_miou:
             best_miou = miou
-            best_miou_name = f'{model_fname}_best-miou_{best_miou*100:.2}'
+            best_miou_name = f'{model_fpath}_best-miou_{best_miou*100:.2}.pt'
             torch.save({
                 'epoch': epoch + 1, # +1 because when loading a checkpoint you want to start at the next epoch
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, best_miou_name)
             
-            os.remove(f'{model_fname}-best-miou*')
+            os.remove(f'{model_fpath}-best-miou*')
             
         print(f'epoch: {epoch+1}\t mIoU: {miou}\t average loss: {losses.avg}')
         # Save a checkpoint every 10 epochs
