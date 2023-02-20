@@ -17,7 +17,7 @@ from pathlib import Path
 
 # Import local files
 from networks import deeplabv3
-from utils import AverageMeter, inter_and_union
+from utils import AverageMeter, inter_and_union, colorize
 from datasets import VOCSegmentation
 from datasets import Cityscapes
 from datasets import Rellis3D
@@ -107,15 +107,18 @@ def test():
         mask_index = 0
         for index, (data, target) in enumerate(dataset_loader):
             data, target = data.to(device), target.to(device)
-            outputs = model(data)  # model(data).unsqueeze(0)
+            outputs = model(data)
             _, pred = torch.max(outputs, 1)
+            
+            pred, target= pred.cpu(), target.cpu()
+            if cfg['test']['save_images']:
+                colorize(pred, mask, cfg['dataset']['dataset'])
             pred = pred.cpu().data.numpy().squeeze().astype(np.uint8)
-            # move data back to cpu to use numpy
             mask = target.cpu().numpy().astype(np.uint8)
-            # Need to interpret 1 image at a time in order to work with some PIL functions
             image_name = dataset.masks[mask_index].split('/')[-1]
             mask_pred = Image.fromarray(image_pred)
             mask_pred.putpalette(cmap)
+
             Path(os.path.join(model_path, 'inference')).mkdir(
                 parents=True, exist_ok=True)
             mask_pred.save(os.path.join(

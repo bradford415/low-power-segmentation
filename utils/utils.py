@@ -114,3 +114,11 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
         mask = mask[i:i + crop[0], j:j + crop[1]]
 
     return image, mask
+
+
+def colorize(prediction, label, cmap='cityscapes'):
+    pred = pred.cpu().data.numpy().squeeze().astype(np.uint8)
+    mask = target.cpu().numpy().astype(np.uint8)
+    image_name = dataset.masks[mask_index].split('/')[-1]
+    mask_pred = Image.fromarray(image_pred)
+    mask_pred.putpalette(cmap)

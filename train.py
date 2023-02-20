@@ -61,12 +61,15 @@ def train():
 
     # File and dir name to save checkpoints
     # Model checkpoints are saved w/ this naming convention during training
-    model_dirname = f"{args.cfg}_{datetime.now().strftime('%Y_%m_%d-%I_%M_%S_%p')}"
+    config_name = args.cfg.split('/')[-1].split('.')[0]
+    model_dirname = f"{config_name}_{datetime.now().strftime('%Y_%m_%d-%I_%M_%S_%p')}"
     model_fname = 'model'
     model_path = os.path.join('output', model_dirname)
     model_fpath = os.path.join('output', model_dirname, model_fname)
+    print(model_path)
+    print(model_fpath)
     Path(model_path).mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(args.cfg, model_fpath)
+    shutil.copyfile(args.cfg, f"{model_dirname}_{config_name}")
 
     # Create Train and validation dataset (validation to test accuracy after every epoch)
     if cfg['dataset']['dataset'] == 'pascal':
@@ -192,11 +195,14 @@ def train():
 
             loss.backward()
             optimizer.step()
+            if index > 10:
+                break
+
 
         ###################### Start here, go through this function and then save best miou and last epoch
         # Evaluate epoch
         model.eval()
-        inter_meter = AverageMeter()  
+        inter_meter = AverageMeter()
         union_meter = AverageMeter()
         print('Evaluating on validation set...')
         with torch.inference_mode():
@@ -204,6 +210,9 @@ def train():
                 data, target = data.to(device), target.to(device)
                 outputs = model(data)
                 _, pred = torch.max(outputs, 1)
+
+                pred = pred.cpu()
+                target = target.cpu()
                 Path(os.path.join(model_path, 'inference')).mkdir(
                     parents=True, exist_ok=True)
                 inter, union = inter_and_union(
@@ -213,8 +222,13 @@ def train():
                 inter_meter.update(inter)
                 union_meter.update(union)
 
+                if index > 10:
+                    break
+
         iou = inter_meter.sum / (union_meter.sum + 1e-10) # Calculate IoU for each class
-        miou = iou.mean
+        miou = iou.mean()
+
+        print(miou)
 
         # Save model with best mIoU
         if miou > best_miou:
