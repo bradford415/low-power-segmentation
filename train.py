@@ -45,8 +45,10 @@ def train():
     torch.backends.cudnn.benchmark = cfg['cudnn']['benchmark']
     use_cuda = torch.cuda.is_available()
     device = torch.device('cuda' if use_cuda else 'cpu')
-    train_kwargs = {'batch_size': cfg['train']['batch_size'], 'shuffle': cfg['train']['shuffle']}
-    val_kwargs = {'batch_size': cfg['test']['batch_size'], 'shuffle': cfg['train']['shuffle']}  # val and test
+    train_kwargs = {'batch_size': cfg['train']['batch_size'], 
+                    'shuffle': cfg['train']['shuffle']}
+    val_kwargs = {'batch_size': cfg['test']['batch_size'],
+                  'shuffle': cfg['train']['shuffle']}  # val and test
     
     if use_cuda:
         print(f"\nUsing GPU(s): {torch.cuda.get_device_name(cfg['gpus'])}\n")
@@ -64,8 +66,8 @@ def train():
     config_name = args.cfg.split('/')[-1].split('.')[0]
     model_dirname = f"{config_name}_{datetime.now().strftime('%Y_%m_%d-%I_%M_%S_%p')}"
     model_fname = 'model'
-    model_path = os.path.join('output', model_dirname)
-    model_fpath = os.path.join('output', model_dirname, model_fname)
+    model_path = os.path.join('output', 'train', model_dirname)
+    model_fpath = os.path.join('output', 'train', model_dirname, model_fname)
     Path(model_path).mkdir(parents=True, exist_ok=True)
     shutil.copyfile(args.cfg, f"{model_path}/{args.cfg.split('/')[-1]}")
 
@@ -245,7 +247,7 @@ def train():
                 'epoch': epoch + 1, # +1 because when loading a checkpoint you want to start at the next epoch
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, f'{model_fpath}_epoch{epoch + 1}')
+            }, f'{model_fpath}_epoch{epoch + 1}.pt')
 
 if __name__ == '__main__':
     train()
