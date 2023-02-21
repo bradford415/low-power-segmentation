@@ -117,6 +117,8 @@ def train():
     model.train()
     criterion = nn.CrossEntropyLoss(ignore_index=cfg['train']['ignore_label'])
     if use_cuda:
+        print("parallel")
+        print(cfg['gpus'])
         model = nn.DataParallel(model, device_ids=cfg['gpus'])
 
     # PyTorch grabs the optimization parameters slightly different shown here:
@@ -194,8 +196,8 @@ def train():
 
             loss.backward()
             optimizer.step()
-            if index > 10:
-                break
+            #if index > 10:
+            #    break
 
         # Evaluate on validation set
         model.eval()

@@ -1,6 +1,6 @@
 cudnn:
   benchmark: true
-gpus: [0]
+gpus: [0,1]
 workers: 4
 dataset:
   dataset: cityscapes
@@ -9,7 +9,7 @@ dataset:
 model:
   backbone: resnet101
 train:
-  batch_size: 8
+  batch_size: 32
   shuffle: true
   crop_size: 769
   start_epoch: 0

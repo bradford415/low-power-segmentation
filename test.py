@@ -144,7 +144,7 @@ def test():
 
 def main():
 
-    arg
+    
 
     with open('configs/base_experiment.yaml', 'r') as file:
         prim_service = yaml.safe_load(file)
