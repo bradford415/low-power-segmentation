@@ -167,6 +167,7 @@ def train():
     print('Training...\n')
     start_epoch = cfg['train']['start_epoch']
     end_epoch = cfg['train']['end_epoch']
+    best_miou_name = None 
     best_miou = 0.0 
     for epoch in range(start_epoch, end_epoch):
         print(f'Epoch {epoch+1}: ')
@@ -196,9 +197,7 @@ def train():
             if index > 10:
                 break
 
-
-        ###################### Start here, go through this function and then save best miou and last epoch
-        # Evaluate epoch
+        # Evaluate on validation set
         model.eval()
         inter_meter = AverageMeter()
         union_meter = AverageMeter()
@@ -211,8 +210,6 @@ def train():
 
                 pred = pred.cpu()
                 target = target.cpu()
-                Path(os.path.join(model_path, 'inference')).mkdir(
-                    parents=True, exist_ok=True)
                 inter, union = inter_and_union(
                     pred, target, len(dataset_train.CLASSES))
                 # Keep running sum of intersection and union values of image
@@ -220,35 +217,35 @@ def train():
                 inter_meter.update(inter)
                 union_meter.update(union)
 
-                if index > 10:
+                if index > 5:
                     break
 
         iou = inter_meter.sum / (union_meter.sum + 1e-10) # Calculate IoU for each class
         miou = iou.mean()
 
-        print(miou)
-
         # Save model with best mIoU
         if miou > best_miou:
+            if best_miou_name is not None:
+                os.remove(best_miou_name)
             best_miou = miou
-            best_miou_name = f'{model_fpath}_best-miou_{best_miou*100:.2}.pt'
+            best_miou_name = f'{model_fpath}_best_miou_{best_miou*100:.2f}'.replace('.','-')
+            best_miou_name += '.pt'
             torch.save({
                 'epoch': epoch + 1, # +1 because when loading a checkpoint you want to start at the next epoch
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, best_miou_name)
+            if index > 1:
+                old_best_name = best_miou_name
             
-            os.remove(f'{model_fpath}-best-miou*')
-            
-        print(f'epoch: {epoch+1}\t mIoU: {miou}\t average loss: {losses.avg}')
+        print(f'epoch: {epoch+1}\t mIoU: {miou*100:.2f}\t average loss: {losses.avg:.2f}\n')
         # Save a checkpoint every 10 epochs
         if epoch % 10 == 9:
             torch.save({
                 'epoch': epoch + 1, # +1 because when loading a checkpoint you want to start at the next epoch
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, model_fpath % (epoch + 1))
-
+            }, f'{model_fpath}_epoch{epoch + 1}')
 
 if __name__ == '__main__':
     train()

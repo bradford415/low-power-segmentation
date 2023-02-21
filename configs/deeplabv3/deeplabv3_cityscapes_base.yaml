@@ -13,7 +13,7 @@ train:
   shuffle: true
   crop_size: 769
   start_epoch: 0
-  end_epoch: 1 #200
+  end_epoch: 12 #200
   optimizer: sgd
   base_lr: 0.007
   last_mult: 1.0
