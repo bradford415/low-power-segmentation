@@ -11,7 +11,6 @@ import torch.nn as nn
 import torch.optim as optim
 import pdb  # Python debugger
 import numpy as np
-from scipy.io import loadmat
 from PIL import Image
 from pathlib import Path
 from datetime import datetime
@@ -49,7 +48,7 @@ def test():
         test_kwargs.update(cuda_kwargs)
 
 
-    model_path = cfg['test']['model_path']
+    model_weights = cfg['test']['model_path']
     config_name = args.cfg.split('/')[-1].split('.')[0]
     model_dirname = f"{config_name}_{datetime.now().strftime('%Y_%m_%d-%I_%M_%S_%p')}"
     model_fname = 'model'
@@ -61,10 +60,7 @@ def test():
         image_path = os.path.join('output', 'inference', model_dirname, 'images')
         Path(image_path).mkdir(parents=True, exist_ok=True)
 
-
-
-    # Crop size is currently hard coded but can be changed to use args.crop_size
-    cmap = color_maps[cfg['dataset']['dataset']]
+    cmap = np.array(color_maps[cfg['dataset']['dataset']]).flatten().tolist()
     if cfg['dataset']['dataset'] == 'pascal':
         test_dataset = VOCSegmentation('data/pascal',
                                   train=False, crop_size=None)#crop_size=args.crop_size)
@@ -90,8 +86,8 @@ def test():
 
     # Inference
     model = model.eval()  # Required to set BN layers to eval mode
-    print(f"Loading model {model_path}")
-    weights = torch.load(model_path, map_location=device)
+    print(f"Loading model {model_weights}")
+    weights = torch.load(model_weights, map_location=device)
 
     # Remove 'module.' appended by DataParallel() 
     state_dict = {k[7:]: v for k,
@@ -111,7 +107,7 @@ def test():
             
             pred, target= pred.cpu(), target.cpu()
             if cfg['test']['save_images']:
-                image_name = os.join(image_path,
+                image_name = os.path.join(image_path,
                     test_dataset.masks[index].split('/')[-1]) 
                 colorize(pred, image_name, cmap)
             print('eval: {0}/{1}'.format(index + 1, len(test_dataset)))
@@ -134,10 +130,6 @@ def test():
 
 
 def main():
-
-    with open('configs/base_experiment.yaml', 'r') as file:
-        prim_service = yaml.safe_load(file)
-
     test()
 
 
