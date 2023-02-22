@@ -1,293 +1,165 @@
 import os
+import sys
 import copy
 import torch
 import torch.nn.utils.prune as prune
-from utils import set_random_seeds, create_model, prepare_dataloader, train_model, save_model, load_model, evaluate_model, create_classification_report
+import warnings
+from torchvision.models import resnet18
+from torchvision.models import resnet101
+import torch_pruning as tp
+from torchsummary import summary
 
-def measure_module_sparsity(module, weight=True, bias=False, use_mask=False):
+import argparse
 
-    num_zeros = 0
-    num_elements = 0
+import yaml
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import pdb  # Python debugger
+import numpy as np
+from scipy.io import loadmat
+from PIL import Image
+from pathlib import Path
 
-    if use_mask == True:
-        for buffer_name, buffer in module.named_buffers():
-            if "weight_mask" in buffer_name and weight == True:
-                num_zeros += torch.sum(buffer == 0).item()
-                num_elements += buffer.nelement()
-            if "bias_mask" in buffer_name and bias == True:
-                num_zeros += torch.sum(buffer == 0).item()
-                num_elements += buffer.nelement()
-    else:
-        for param_name, param in module.named_parameters():
-            if "weight" in param_name and weight == True:
-                num_zeros += torch.sum(param == 0).item()
-                num_elements += param.nelement()
-            if "bias" in param_name and bias == True:
-                num_zeros += torch.sum(param == 0).item()
-                num_elements += param.nelement()
-
-    sparsity = num_zeros / num_elements
-
-    return num_zeros, num_elements, sparsity
+# Import local files
+from networks import deeplabv3
+from utils import AverageMeter, inter_and_union, colorize
+from datasets import VOCSegmentation
+from datasets import Cityscapes
+from datasets import Rellis3D
 
 
-def measure_global_sparsity(model,
-                            weight=True,
-                            bias=False,
-                            conv2d_use_mask=False,
-                            linear_use_mask=False):
+parser = argparse.ArgumentParser()
+parser.add_argument('--cfg', type=str, required=True,
+                    help='Path to configuration file (.yaml file)')
+args = parser.parse_args()
 
-    num_zeros = 0
-    num_elements = 0
+with open(args.cfg, "r") as stream:
+    try:
+        cfg = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
 
-    for module_name, module in model.named_modules():
+def depGraph(model):
+    #model = resnet101(pretrained=True).eval()
+    example_inputs = torch.randn(3, 1024,2048)
+    # 1. build dependency graph for resnet18
+    DG = tp.DependencyGraph().build_dependency(model, example_inputs=example_inputs)
 
-        if isinstance(module, torch.nn.Conv2d):
+    # 2. Select some channels to prune. Here we prune the channels indexed by [2, 6, 9].
+    pruning_idxs = pruning_idxs=[2, 6, 9]
+    pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs )
 
-            module_num_zeros, module_num_elements, _ = measure_module_sparsity(
-                module, weight=weight, bias=bias, use_mask=conv2d_use_mask)
-            num_zeros += module_num_zeros
-            num_elements += module_num_elements
+    # 3. prune all grouped layer that is coupled with model.conv1
+    if DG.check_pruning_group(pruning_group):
+        pruning_group.exec()
 
-        elif isinstance(module, torch.nn.Linear):
+    print("After pruning:")
+    print(model)
 
-            module_num_zeros, module_num_elements, _ = measure_module_sparsity(
-                module, weight=weight, bias=bias, use_mask=linear_use_mask)
-            num_zeros += module_num_zeros
-            num_elements += module_num_elements
+    print(pruning_group)
 
-    sparsity = num_zeros / num_elements
+def magnitude_prune(model):
+    model = resnet101(pretrained=True)
+    example_inputs = torch.randn(1, 3, 1024,2048)
 
-    return num_zeros, num_elements, sparsity
+    # 0. importance criterion for parameter selections
+    imp = tp.importance.MagnitudeImportance(p=2, group_reduction='mean')
 
+    # 1. ignore some layers that should not be pruned, e.g., the final classifier layer.
+    ignored_layers = []
+    for m in model.modules():
+        if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
+            ignored_layers.append(m) # DO NOT prune the final classifier!
 
-def iterative_pruning_finetuning(model,
-                                 train_loader,
-                                 test_loader,
-                                 device,
-                                 learning_rate,
-                                 l1_regularization_strength,
-                                 l2_regularization_strength,
-                                 learning_rate_decay=0.1,
-                                 conv2d_prune_amount=0.4,
-                                 linear_prune_amount=0.2,
-                                 num_iterations=10,
-                                 num_epochs_per_iteration=10,
-                                 model_filename_prefix="pruned_model",
-                                 model_dir="saved_models",
-                                 grouped_pruning=False):
+            
+    # 2. Pruner initialization
+    iterative_steps = 5 # You can prune your model to the target sparsity iteratively.
+    pruner = tp.pruner.MagnitudePruner(
+        model, 
+        example_inputs, 
+        global_pruning=True, # If False, a uniform sparsity will be assigned to different layers.
+        importance=imp, # importance criterion for parameter selection
+        iterative_steps=iterative_steps, # the number of iterations to achieve target sparsity
+        ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+        ignored_layers=ignored_layers,
+    )
 
-    for i in range(num_iterations):
-
-        print("Pruning and Finetuning {}/{}".format(i + 1, num_iterations))
-
-        print("Pruning...")
-
-        if grouped_pruning == True:
-            # Global pruning
-            # I would rather call it grouped pruning.
-            parameters_to_prune = []
-            for module_name, module in model.named_modules():
-                if isinstance(module, torch.nn.Conv2d):
-                    parameters_to_prune.append((module, "weight"))
-            prune.global_unstructured(
-                parameters_to_prune,
-                pruning_method=prune.L1Unstructured,
-                amount=conv2d_prune_amount,
-            )
-        else:
-            for module_name, module in model.named_modules():
-                if isinstance(module, torch.nn.Conv2d):
-                    prune.l1_unstructured(module,
-                                          name="weight",
-                                          amount=conv2d_prune_amount)
-                elif isinstance(module, torch.nn.Linear):
-                    prune.l1_unstructured(module,
-                                          name="weight",
-                                          amount=linear_prune_amount)
-
-        _, eval_accuracy = evaluate_model(model=model,
-                                          test_loader=test_loader,
-                                          device=device,
-                                          criterion=None)
-
-        classification_report = create_classification_report(
-            model=model, test_loader=test_loader, device=device)
-
-        num_zeros, num_elements, sparsity = measure_global_sparsity(
-            model,
-            weight=True,
-            bias=False,
-            conv2d_use_mask=True,
-            linear_use_mask=False)
-
-        print("Test Accuracy: {:.3f}".format(eval_accuracy))
-        print("Classification Report:")
-        print(classification_report)
-        print("Global Sparsity:")
-        print("{:.2f}".format(sparsity))
-
-        # print(model.conv1._forward_pre_hooks)
-
-        print("Fine-tuning...")
-
-        train_model(model=model,
-                    train_loader=train_loader,
-                    test_loader=test_loader,
-                    device=device,
-                    l1_regularization_strength=l1_regularization_strength,
-                    l2_regularization_strength=l2_regularization_strength,
-                    learning_rate=learning_rate * (learning_rate_decay**i),
-                    num_epochs=num_epochs_per_iteration)
-
-        _, eval_accuracy = evaluate_model(model=model,
-                                          test_loader=test_loader,
-                                          device=device,
-                                          criterion=None)
-
-        classification_report = create_classification_report(
-            model=model, test_loader=test_loader, device=device)
-
-        num_zeros, num_elements, sparsity = measure_global_sparsity(
-            model,
-            weight=True,
-            bias=False,
-            conv2d_use_mask=True,
-            linear_use_mask=False)
-
-        print("Test Accuracy: {:.3f}".format(eval_accuracy))
-        print("Classification Report:")
-        print(classification_report)
-        print("Global Sparsity:")
-        print("{:.2f}".format(sparsity))
-
-        model_filename = "{}_{}.pt".format(model_filename_prefix, i + 1)
-        model_filepath = os.path.join(model_dir, model_filename)
-        save_model(model=model,
-                   model_dir=model_dir,
-                   model_filename=model_filename)
-        model = load_model(model=model,
-                           model_filepath=model_filepath,
-                           device=device)
-
-    return model
-
-
-def remove_parameters(model):
-
-    for module_name, module in model.named_modules():
-        if isinstance(module, torch.nn.Conv2d):
-            try:
-                prune.remove(module, "weight")
-            except:
-                pass
-            try:
-                prune.remove(module, "bias")
-            except:
-                pass
-        elif isinstance(module, torch.nn.Linear):
-            try:
-                prune.remove(module, "weight")
-            except:
-                pass
-            try:
-                prune.remove(module, "bias")
-            except:
-                pass
-
-    return model
+    base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
+    for i in range(iterative_steps):
+        # 3. the pruner.step will remove some channels from the model with least importance
+        pruner.step()
+        
+        # 4. Do whatever you like here, such as fintuning
+        macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
+        print(model)
+        print(model(example_inputs).shape)
+        print(
+            "  Iter %d/%d, Params: %.2f M => %.2f M"
+            % (i+1, iterative_steps, base_nparams / 1e6, nparams / 1e6)
+        )
+        print(
+            "  Iter %d/%d, MACs: %.2f G => %.2f G"
+            % (i+1, iterative_steps, base_macs / 1e9, macs / 1e9)
+        )
+        # finetune your model here
+        # finetune(model)
+        # ...
 
 
 def main():
+    
+    
 
-    num_classes = 10
-    random_seed = 1
-    l1_regularization_strength = 0
-    l2_regularization_strength = 1e-4
-    learning_rate = 1e-3
-    learning_rate_decay = 1
+    torch.backends.cudnn.benchmark = cfg['cudnn']['benchmark']
+    use_cuda = torch.cuda.is_available()
+    device = torch.device('cuda' if use_cuda else 'cpu')
+    test_kwargs = {'batch_size': cfg['test']['batch_size'],
+                   'shuffle': False}  # val and test
+    if use_cuda:
+        cuda_kwargs = {'num_workers': cfg['workers'],
+                       'pin_memory': True}
+        test_kwargs.update(cuda_kwargs)
 
-    cuda_device = torch.device("cuda:0")
-    cpu_device = torch.device("cpu:0")
+    model_dirname = 'deeplabv3_{0}_{1}_{2}'.format(cfg['model']['backbone'], cfg['dataset']['dataset'], args.cfg)
+    model_fname = 'deeplabv3_{0}_{1}_{2}_epoch%d.pth'.format(cfg['model']['backbone'], cfg['dataset']['dataset'], args.cfg)
+    model_fpath = os.path.join('output', model_dirname, model_fname)
 
-    model_dir = "saved_models"
-    model_filename = "resnet18_cifar10.pt"
-    model_filename_prefix = "pruned_model"
-    pruned_model_filename = "resnet101_pruned_cityscape.pt"
-    model_filepath = os.path.join(model_dir, model_filename)
-    pruned_model_filepath = os.path.join(model_dir, pruned_model_filename)
 
-    set_random_seeds(random_seed=random_seed)
+    dataset = Cityscapes('data/cityscapes',train=False, crop_size=769)
+    #crop_size=args.crop_size)
 
-    # Create an untrained model.
-    model = create_model(num_classes=num_classes)
+    model = getattr(deeplabv3, 'create_resnet101')(
+            device=device,
+            num_classes=len(dataset.CLASSES))
 
-    # Load a pretrained model.
-    model = load_model(model=model,
-                       model_filepath=model_filepath,
-                       device=cuda_device)
 
-    train_loader, test_loader, classes = prepare_dataloader(
-        num_workers=8, train_batch_size=128, eval_batch_size=256)
+    model = model.to(device)
 
-    _, eval_accuracy = evaluate_model(model=model,
-                                      test_loader=test_loader,
-                                      device=cuda_device,
-                                      criterion=None)
+    # Inference
+    model = model.eval()
 
-    classification_report = create_classification_report(
-        model=model, test_loader=test_loader, device=cuda_device)
+    checkpoint = torch.load('output/deeplabv3_cityscapes_base_2023_02_21-04_46_24_PM/model_best_miou_53-89.pt', map_location=device)
 
-    num_zeros, num_elements, sparsity = measure_global_sparsity(model)
 
-    print("Test Accuracy: {:.3f}".format(eval_accuracy))
-    print("Classification Report:")
-    print(classification_report)
-    print("Global Sparsity:")
-    print("{:.2f}".format(sparsity))
+    state_dict = {k[7:]: v for k, v in checkpoint['model'].items() if 'tracked' not in k}
 
-    print("Iterative Pruning + Fine-Tuning...")
+    model.load_state_dict(state_dict)
 
-    pruned_model = copy.deepcopy(model)
+    #summary(model,(3, 1024,2048))
 
-    iterative_pruning_finetuning(
-        model=pruned_model,
-        train_loader=train_loader,
-        test_loader=test_loader,
-        device=cuda_device,
-        learning_rate=learning_rate,
-        learning_rate_decay=learning_rate_decay,
-        l1_regularization_strength=l1_regularization_strength,
-        l2_regularization_strength=l2_regularization_strength,
-        conv2d_prune_amount=0.98,
-        linear_prune_amount=0,
-        num_iterations=1,
-        num_epochs_per_iteration=500,
-        model_filename_prefix=model_filename_prefix,
-        model_dir=model_dir,
-        grouped_pruning=True)
 
-    # Apply mask to the parameters and remove the mask.
-    remove_parameters(model=pruned_model)
+    #pruning methods
+    #depGraph(model)
+    magnitude_prune(model)
 
-    _, eval_accuracy = evaluate_model(model=pruned_model,
-                                      test_loader=test_loader,
-                                      device=cuda_device,
-                                      criterion=None)
+    
 
-    classification_report = create_classification_report(
-        model=pruned_model, test_loader=test_loader, device=cuda_device)
 
-    num_zeros, num_elements, sparsity = measure_global_sparsity(pruned_model)
-
-    print("Test Accuracy: {:.3f}".format(eval_accuracy))
-    print("Classification Report:")
-    print(classification_report)
-    print("Global Sparsity:")
-    print("{:.2f}".format(sparsity))
-
-    save_model(model=model, model_dir=model_dir, model_filename=model_filename)
 
 
 if __name__ == "__main__":
+    with open('configs/deeplabv3/deeplabv3_cityscapes_base.yaml', 'r') as file:
+        prim_service = yaml.safe_load(file)
     main()
