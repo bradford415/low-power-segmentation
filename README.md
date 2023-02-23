@@ -14,12 +14,10 @@ python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ## Running the Model on the Palmetto Super Computer 
 ### Train
 ```bash
-python train.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
 
 ### Test
 ```bash
-python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
 
 
