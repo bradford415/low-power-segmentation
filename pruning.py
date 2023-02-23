@@ -58,11 +58,11 @@ def depGraph(model):
     print("After pruning:")
     print(model)
 
-    print(pruning_group)
+    print(pruning_group) 
 
 def magnitude_prune(model):
-    model = resnet101(pretrained=True)
-    example_inputs = torch.randn(1, 3, 1024,2048)
+#    model = resnet101(pretrained=True)
+    example_inputs = torch.randn(1,3,1024,2048)
 
     # 0. importance criterion for parameter selections
     imp = tp.importance.MagnitudeImportance(p=2, group_reduction='mean')
