@@ -24,4 +24,6 @@ train:
 test:
   batch_size: 1
   shuffle: false
+  model_path: 'trained-models/model_best_miou_26-56.pt'
+  save_images: True
 

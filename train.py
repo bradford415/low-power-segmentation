@@ -4,12 +4,14 @@ File to train segmentation models
 """
 import argparse
 import os
+import sys
 import yaml
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import pdb 
+import logging
 from tqdm import tqdm
 import numpy as np
 #from scipy.io import loadmat
@@ -41,12 +43,31 @@ with open(args.cfg, "r") as stream:
         print(exc)
 
 
+class Logger(object):
+    """Print to stdout and to logfile"""
+    def __init__(self, log_path):
+        self.terminal = sys.stdout
+        self.log = open(log_path, "a")
+   
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)  
+
+    def flush(self):
+        # this flush method is needed for python 3 compatibility.
+        # this handles the flush command by doing nothing.
+        # you might want to specify some extra behavior here.
+        pass    
+
+
 def train():
     torch.backends.cudnn.benchmark = cfg['cudnn']['benchmark']
     use_cuda = torch.cuda.is_available()
     device = torch.device('cuda' if use_cuda else 'cpu')
-    train_kwargs = {'batch_size': cfg['train']['batch_size'], 'shuffle': cfg['train']['shuffle']}
-    val_kwargs = {'batch_size': cfg['test']['batch_size'], 'shuffle': cfg['train']['shuffle']}  # val and test
+    train_kwargs = {'batch_size': cfg['train']['batch_size'], 
+                    'shuffle': cfg['train']['shuffle']}
+    val_kwargs = {'batch_size': cfg['test']['batch_size'],
+                  'shuffle': cfg['train']['shuffle']}  # val and test
     
     if use_cuda:
         print(f"\nUsing GPU(s): {torch.cuda.get_device_name(cfg['gpus'])}\n")
@@ -64,10 +85,14 @@ def train():
     config_name = args.cfg.split('/')[-1].split('.')[0]
     model_dirname = f"{config_name}_{datetime.now().strftime('%Y_%m_%d-%I_%M_%S_%p')}"
     model_fname = 'model'
-    model_path = os.path.join('output', model_dirname)
-    model_fpath = os.path.join('output', model_dirname, model_fname)
+    log_file = 'log_file.log'
+    model_path = os.path.join('output', 'train', model_dirname)
+    model_fpath = os.path.join('output', 'train', model_dirname, model_fname)
+    log_path = os.path.join('output', 'train', model_dirname, log_file)
+
     Path(model_path).mkdir(parents=True, exist_ok=True)
     shutil.copyfile(args.cfg, f"{model_path}/{args.cfg.split('/')[-1]}")
+    sys.stdout = Logger(log_path)
 
     # Create Train and validation dataset (validation to test accuracy after every epoch)
     if cfg['dataset']['dataset'] == 'pascal':
@@ -90,6 +115,8 @@ def train():
 
     print(f'Number of train samples: {dataset_train.num_samples}')
     print(f'Number of validation samples: {dataset_val.num_samples}')
+
+    logging.info('test')
 
     # In this case, getattr() is calling a function from deeplab.py file to return the model
     # and the following parenthesis pass arguments to this 'resnet101' function
@@ -245,7 +272,7 @@ def train():
                 'epoch': epoch + 1, # +1 because when loading a checkpoint you want to start at the next epoch
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, f'{model_fpath}_epoch{epoch + 1}')
+            }, f'{model_fpath}_epoch{epoch + 1}.pt')
 
 if __name__ == '__main__':
     train()

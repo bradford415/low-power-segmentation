@@ -2,8 +2,8 @@ __pycache__/
 
 !.gitkeep
 
-# Ignore datasets used for this project (this should ignore everything (files and folders) called data in any directory)
 data/*
+trained-models/*
 
 # Ignore output directory
 output
