@@ -1,5 +1,11 @@
 # Low Power Semantic Segmentation
 
+## Anaconda Environment Setup
+```bash
+conda env create -f environment.yml
+pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 -f https://download.pytorch.org/whl/torch_stable.html
+```
+
 ## Running the Model Locally 
 ### Train
 ```bash
