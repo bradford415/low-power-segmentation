@@ -5,12 +5,9 @@ channels:
   - defaults
 dependencies:
   - python==3.8
-  - numpy
   - pandas
   - matplotlib
   - pip:
     - pillow
-    - torch
-    - torchvision
     - pyyaml
     - tqdm
