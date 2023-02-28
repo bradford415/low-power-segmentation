@@ -1,8 +1,6 @@
 cudnn:
   benchmark: true
-gpus:
-  - 0
-  - 1
+gpus: [0, 1]
 workers: 4
 dataset:
   dataset: cityscapes

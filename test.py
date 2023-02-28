@@ -41,8 +41,12 @@ def test():
     use_cuda = torch.cuda.is_available()
     device = torch.device('cuda' if use_cuda else 'cpu')
     test_kwargs = {'batch_size': cfg['test']['batch_size'],
-                   'shuffle': False}  # val and test
+                   'shuffle': False} 
     if use_cuda:
+        # Set the single GPU we want to use
+        os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg['gpus'][0]) 
+        print(f"Using GPU: {torch.cuda.get_device_name(cfg['gpus'][0])}\n")
         cuda_kwargs = {'num_workers': cfg['workers'],
                        'pin_memory': True}
         test_kwargs.update(cuda_kwargs)
@@ -82,6 +86,7 @@ def test():
     else:
         raise ValueError('Unknown backbone: {}'.format(cfg['model']['backbone']))
 
+    # No DataParallel during inference because batch_size = 1
     model = model.to(device)
 
     # Inference

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #PBS -N brad-low-power
-#PBS -q viprgs -l select=1:ncpus=20:ngpus=2:mem=64gb:gpu_model=a100,walltime=1:00:00
+#PBS -q viprgs -l select=1:ncpus=20:ngpus=2:mem=64gb:gpu_model=a100,walltime=6:00:00
 #PBS -j oe
 
 source activate low-power
