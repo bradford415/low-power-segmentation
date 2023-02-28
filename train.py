@@ -70,7 +70,9 @@ def train():
                   'shuffle': cfg['train']['shuffle']}  # val and test
     
     if use_cuda:
-        print(f"\nUsing GPU(s): {torch.cuda.get_device_name(cfg['gpus'])}\n")
+        print(f"Using {len(cfg['gpus'])} GPU(s): ")
+        for gpu in len(cfg['gpus']):
+            print(f"GPU: {torch.cuda.get_device_name(gpu)}\n")
         cuda_kwargs = {'num_workers': cfg['workers'],
                        'pin_memory': True} 
                        # pin speeds up host to device tensor transfer

@@ -4,7 +4,7 @@ gpus: [0, 1]
 workers: 4
 dataset:
   dataset: cityscapes
-  root: data/cityscapes
+  root: /zfs/deeprl/datasets/cityscapes
   num_classes: 19
 model:
   backbone: resnet101
