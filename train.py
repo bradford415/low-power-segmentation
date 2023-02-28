@@ -221,8 +221,6 @@ def train():
 
             loss.backward()
             optimizer.step()
-            if index > 10:
-                break
 
         # Evaluate on validation set
         model.eval()
@@ -244,8 +242,6 @@ def train():
                 inter_meter.update(inter)
                 union_meter.update(union)
 
-                if index > 5:
-                    break
 
         iou = inter_meter.sum / (union_meter.sum + 1e-10) # Calculate IoU for each class
         miou = iou.mean()
