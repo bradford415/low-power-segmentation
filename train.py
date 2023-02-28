@@ -71,8 +71,8 @@ def train():
     
     if use_cuda:
         print(f"Using {len(cfg['gpus'])} GPU(s): ")
-        for gpu in len(cfg['gpus']):
-            print(f"GPU: {torch.cuda.get_device_name(gpu)}\n")
+        for gpu in range(len(cfg['gpus'])):
+            print(f"    -{torch.cuda.get_device_name(gpu)}")
         cuda_kwargs = {'num_workers': cfg['workers'],
                        'pin_memory': True} 
                        # pin speeds up host to device tensor transfer
@@ -115,7 +115,7 @@ def train():
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
 
-    print(f'Number of train samples: {dataset_train.num_samples}')
+    print(f'\nNumber of train samples: {dataset_train.num_samples}')
     print(f'Number of validation samples: {dataset_val.num_samples}')
 
     logging.info('test')
