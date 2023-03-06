@@ -6,4 +6,6 @@
 
 source activate low-power
 
+cd /scratch1/bselee/low-power-segmentation
+
 python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
