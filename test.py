@@ -66,14 +66,14 @@ def test():
 
     cmap = np.array(color_maps[cfg['dataset']['dataset']]).flatten().tolist()
     if cfg['dataset']['dataset'] == 'pascal':
-        dataset_test = VOCSegmentation('data/pascal',
+        dataset_test = VOCSegmentation(cfg['dataset']['root'],
                                   train=False, crop_size=None)#crop_size=args.crop_size)
     elif cfg['dataset']['dataset'] == 'cityscapes':
-        dataset_test = Cityscapes('data/cityscapes',
+        dataset_test = Cityscapes(cfg['dataset']['root'],
                              train=False, crop_size=None)#crop_size=args.crop_size)
         
     elif cfg['dataset']['dataset'] == 'rellis':
-        dataset_test = Rellis3D('data/rellis',
+        dataset_test = Rellis3D(cfg['dataset']['root'],
                              train=False, crop_size=None)#crop_size=args.crop_size)
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
@@ -89,7 +89,7 @@ def test():
     # No DataParallel during inference because batch_size = 1
     model = model.to(device)
 
-    print(f'\nNumber of train samples: {dataset_test.num_samples}')
+    print(f'\nNumber of test samples: {dataset_test.num_samples}')
 
     # Inference
     model = model.eval()  # Required to set BN layers to eval mode

@@ -118,8 +118,6 @@ def train():
     print(f'\nNumber of train samples: {dataset_train.num_samples}')
     print(f'Number of validation samples: {dataset_val.num_samples}')
 
-    logging.info('test')
-
     # In this case, getattr() is calling a function from deeplab.py file to return the model
     # and the following parenthesis pass arguments to this 'resnet101' function
     # I am not sure the advantage over this rather than just calling the function itself
