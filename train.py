@@ -61,6 +61,20 @@ class Logger(object):
 
 
 def train():
+    # File and dir name to save checkpoints
+    # Model checkpoints are saved w/ this naming convention during training
+    config_name = args.cfg.split('/')[-1].split('.')[0]
+    model_dirname = f"{config_name}_{datetime.now().strftime('%Y_%m_%d-%I_%M_%S_%p')}"
+    model_fname = 'model'
+    log_file = 'log_file.log'
+    model_path = os.path.join('output', 'train', model_dirname)
+    model_fpath = os.path.join('output', 'train', model_dirname, model_fname)
+    log_path = os.path.join('output', 'train', model_dirname, log_file)
+
+    Path(model_path).mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(args.cfg, f"{model_path}/{args.cfg.split('/')[-1]}")
+    sys.stdout = Logger(log_path)
+    
     torch.backends.cudnn.benchmark = cfg['cudnn']['benchmark']
     use_cuda = torch.cuda.is_available()
     device = torch.device('cuda' if use_cuda else 'cpu')
@@ -81,20 +95,6 @@ def train():
         val_kwargs.update(cuda_kwargs)
     else:
         print('Using CPU')
-
-    # File and dir name to save checkpoints
-    # Model checkpoints are saved w/ this naming convention during training
-    config_name = args.cfg.split('/')[-1].split('.')[0]
-    model_dirname = f"{config_name}_{datetime.now().strftime('%Y_%m_%d-%I_%M_%S_%p')}"
-    model_fname = 'model'
-    log_file = 'log_file.log'
-    model_path = os.path.join('output', 'train', model_dirname)
-    model_fpath = os.path.join('output', 'train', model_dirname, model_fname)
-    log_path = os.path.join('output', 'train', model_dirname, log_file)
-
-    Path(model_path).mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(args.cfg, f"{model_path}/{args.cfg.split('/')[-1]}")
-    sys.stdout = Logger(log_path)
 
     # Create Train and validation dataset (validation to test accuracy after every epoch)
     if cfg['dataset']['dataset'] == 'pascal':
