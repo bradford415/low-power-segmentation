@@ -2,6 +2,9 @@ __pycache__/
 
 !.gitkeep
 
+# Ignore palmetto outputs
+*.o*
+
 data/*
 trained-models/*
 

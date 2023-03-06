@@ -13,7 +13,7 @@ train:
   shuffle: true
   crop_size: 769
   start_epoch: 0
-  end_epoch: 200
+  end_epoch: 50
   optimizer: sgd
   base_lr: 0.007
   last_mult: 1.0
@@ -24,6 +24,6 @@ train:
 test:
   batch_size: 1
   shuffle: false
-  model_path: 'trained-models/model_best_miou_26-56.pt'
+  model_path: '/home/bselee/scratch1-link/low-power-segmentation/output/train/deeplabv3_cityscapes_palmetto_2023_02_28-07_01_09_PM'
   save_images: True
 
