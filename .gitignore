@@ -1,12 +1,11 @@
 __pycache__/
 
-!.gitkeep
-
 # Ignore palmetto outputs
 *.o*
 
 data/*
 trained-models/*
+!trained-models/.gitkeep
 
 # Ignore output directory
 output
