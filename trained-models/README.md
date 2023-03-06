@@ -1,1 +1,1 @@
-## Copy Trained Models (.pt files) Here
+## Copy Trained Models (.pt files) Here for Inference
