@@ -34,3 +34,5 @@ python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ### Pruning
 - [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
   - Structured pruning of convolutional kernels
+- [Pruning and Quantization for Deep Neural Network Acceleration: A Survey](https://arxiv.org/abs/2101.09671)
+  - Survey on pruning and quantization
