@@ -24,6 +24,6 @@ train:
 test:
   batch_size: 1
   shuffle: false
-  model_path: '/home/bselee/scratch1-link/low-power-segmentation/output/train/deeplabv3_cityscapes_palmetto_2023_02_28-07_01_09_PM'
+  model_path: 'trained-models/model_best_miou_74-46.pt'
   save_images: True
 
