@@ -61,25 +61,6 @@ class Logger(object):
 
 
 def train():
-    torch.backends.cudnn.benchmark = cfg['cudnn']['benchmark']
-    use_cuda = torch.cuda.is_available()
-    device = torch.device('cuda' if use_cuda else 'cpu')
-    train_kwargs = {'batch_size': cfg['train']['batch_size'], 
-                    'shuffle': cfg['train']['shuffle']}
-    val_kwargs = {'batch_size': cfg['test']['batch_size'],
-                  'shuffle': cfg['train']['shuffle']}  # val and test
-    
-    if use_cuda:
-        print(f"\nUsing GPU(s): {torch.cuda.get_device_name(cfg['gpus'])}\n")
-        cuda_kwargs = {'num_workers': cfg['workers'],
-                       'pin_memory': True} 
-                       # pin speeds up host to device tensor transfer
-                       # (should always be true when using a nvidia gpu)
-        train_kwargs.update(cuda_kwargs)
-        val_kwargs.update(cuda_kwargs)
-    else:
-        print('Using CPU')
-
     # File and dir name to save checkpoints
     # Model checkpoints are saved w/ this naming convention during training
     config_name = args.cfg.split('/')[-1].split('.')[0]
@@ -93,6 +74,27 @@ def train():
     Path(model_path).mkdir(parents=True, exist_ok=True)
     shutil.copyfile(args.cfg, f"{model_path}/{args.cfg.split('/')[-1]}")
     sys.stdout = Logger(log_path)
+    
+    torch.backends.cudnn.benchmark = cfg['cudnn']['benchmark']
+    use_cuda = torch.cuda.is_available()
+    device = torch.device('cuda' if use_cuda else 'cpu')
+    train_kwargs = {'batch_size': cfg['train']['batch_size'], 
+                    'shuffle': cfg['train']['shuffle']}
+    val_kwargs = {'batch_size': cfg['test']['batch_size'],
+                  'shuffle': cfg['train']['shuffle']}  # val and test
+    
+    if use_cuda:
+        print(f"Using {len(cfg['gpus'])} GPU(s): ")
+        for gpu in range(len(cfg['gpus'])):
+            print(f"    -{torch.cuda.get_device_name(gpu)}")
+        cuda_kwargs = {'num_workers': cfg['workers'],
+                       'pin_memory': True} 
+                       # pin speeds up host to device tensor transfer
+                       # (should always be true when using a nvidia gpu)
+        train_kwargs.update(cuda_kwargs)
+        val_kwargs.update(cuda_kwargs)
+    else:
+        print('Using CPU')
 
     # Create Train and validation dataset (validation to test accuracy after every epoch)
     if cfg['dataset']['dataset'] == 'pascal':
@@ -113,10 +115,8 @@ def train():
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
 
-    print(f'Number of train samples: {dataset_train.num_samples}')
+    print(f'\nNumber of train samples: {dataset_train.num_samples}')
     print(f'Number of validation samples: {dataset_val.num_samples}')
-
-    logging.info('test')
 
     # In this case, getattr() is calling a function from deeplab.py file to return the model
     # and the following parenthesis pass arguments to this 'resnet101' function
@@ -221,8 +221,6 @@ def train():
 
             loss.backward()
             optimizer.step()
-            if index > 10:
-                break
 
         # Evaluate on validation set
         model.eval()
@@ -244,8 +242,6 @@ def train():
                 inter_meter.update(inter)
                 union_meter.update(union)
 
-                if index > 5:
-                    break
 
         iou = inter_meter.sum / (union_meter.sum + 1e-10) # Calculate IoU for each class
         miou = iou.mean()
