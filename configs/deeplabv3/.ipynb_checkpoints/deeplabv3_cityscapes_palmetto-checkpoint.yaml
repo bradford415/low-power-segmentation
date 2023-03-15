@@ -3,15 +3,15 @@ cudnn:
 gpus: [0, 1]
 workers: 4
 dataset:
-  dataset: lpcvc
-  root: data/lpcvc
-  num_classes: 14
+  dataset: cityscapes
+  root: /zfs/deeprl/datasets/cityscapes
+  num_classes: 19
 model:
   backbone: resnet101
 train:
   batch_size: 8
   shuffle: true
-  crop_size: 512
+  crop_size: 769
   start_epoch: 0
   end_epoch: 50
   optimizer: sgd

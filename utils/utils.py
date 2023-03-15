@@ -100,6 +100,8 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     image = data_transforms(image)
     mask = torch.LongTensor(np.array(mask).astype(np.int64))
 
+    
+    
     if crop:
         h, w = image.shape[1], image.shape[2]
         pad_tb = max(0, crop[0] - h)
@@ -113,6 +115,8 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
         image = image[:, i:i + crop[0], j:j + crop[1]]
         mask = mask[i:i + crop[0], j:j + crop[1]]
 
+    #print(mask.shape)
+        
     return image, mask
 
 

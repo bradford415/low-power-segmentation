@@ -35,16 +35,14 @@ class lpcvc(Dataset):
 
     def __getitem__(self, index):
         _img = Image.open(self.images[index]).convert('RGB')
-        _target = Image.open(self.masks[index])
+        _target = Image.open(self.masks[index]).convert('L')
 
         _img, _target = preprocess(_img,
                                 _target,
                                 flip=True if self.train else False,
                                 scale=(0.5, 2.0) if self.train else None,
                                 crop=(self.crop_size, self.crop_size) if self.train else (512, 512))
-        #print('Image size')
-        #print(_img.shape)
-        #print(_target.shape)
+        
         
         if self.transform is not None:
             _img = self.transform(_img)
@@ -55,12 +53,8 @@ class lpcvc(Dataset):
         return _img, _target
     
     def _get_files(self, dataset_split, data_type):
-        dataset_path = os.path.join(self.root, dataset_split, data_type, '*.png')
-        #print(dataset_path)
-        #filenames = list(Path(dataset_path).rglob('*.*'))
-        #filenames = glob.glob(os.path.join(dataset_path,'*.png'))
-        filenames = glob.glob(dataset_path, recursive=True)
-        #print(filenames)
+        dataset_path = os.path.join(self.root, dataset_split, data_type)
+        filenames = glob.glob(f'{self.root}/{dataset_split}/{data_type}/*')
         
         return sorted(filenames)
         

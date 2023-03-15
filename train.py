@@ -179,6 +179,7 @@ def train():
         optimizer = optim.SGD(params_to_optimize, lr=cfg['train']['base_lr'],
                             momentum=cfg['train']['momentum'], weight_decay=cfg['train']['weight_decay'])
     losses = AverageMeter()
+        
     loader_train = torch.utils.data.DataLoader(dataset_train, **train_kwargs)
     loader_val = torch.utils.data.DataLoader(dataset_val, **val_kwargs)
 
