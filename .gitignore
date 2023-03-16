@@ -3,6 +3,9 @@ __pycache__/
 # Ignore palmetto outputs
 *.o*
 
+# Ignore jupyter checkpoints
+.ipynb_checkpoints
+
 data/*
 trained-models/*
 !trained-models/.gitkeep
