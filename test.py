@@ -22,7 +22,7 @@ from utils import colorize, color_maps
 from datasets import VOCSegmentation
 from datasets import Cityscapes
 from datasets import Rellis3D
-
+from datasets import lpcvc
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cfg', type=str, required=True,
@@ -75,6 +75,11 @@ def test():
     elif cfg['dataset']['dataset'] == 'rellis':
         dataset_test = Rellis3D(cfg['dataset']['root'],
                              train=False, crop_size=None)#crop_size=args.crop_size)
+    
+    elif cfg['dataset']['dataset'] == 'lpcvc':
+        dataset_test = Rellis3D(cfg['dataset']['root'],
+                             train=False, crop_size=None)#crop_size=args.crop_size) 
+        
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
 
