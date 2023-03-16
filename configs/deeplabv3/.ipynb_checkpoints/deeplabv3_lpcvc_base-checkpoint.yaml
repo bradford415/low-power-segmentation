@@ -1,0 +1,29 @@
+cudnn:
+  benchmark: true
+gpus: [0, 1]
+workers: 4
+dataset:
+  dataset: lpcvc
+  root: data/lpcvc
+  num_classes: 14
+model:
+  backbone: resnet101
+train:
+  batch_size: 8
+  shuffle: true
+  crop_size: 512
+  start_epoch: 0
+  end_epoch: 50
+  optimizer: sgd
+  base_lr: 0.007
+  last_mult: 1.0
+  momentum: 0.9
+  weight_decay: 0.0001
+  ignore_label: 255
+  resume: False
+test:
+  batch_size: 1
+  shuffle: false
+  model_path: 'trained-models/model_best_miou_74-46.pt'
+  save_images: True
+
