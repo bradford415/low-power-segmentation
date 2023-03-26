@@ -7,6 +7,12 @@ pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 -f https://download.py
 ```
 
 ## Running the Project Locally 
+
+### Activate the Conda Environment
+```bash
+source activate low-power
+```
+
 ### Train
 ```bash
 python train.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
@@ -35,6 +41,11 @@ qsub run.pbs
 ```
 
 You can view the job status at any point using ```qstat -u <username>```
+
+### Requesting an Interactive Node
+```bash
+qsub -I -q viprgs -l select=1:ncpus=20:ngpus=2:mem=128gb:gpu_model=a100,walltime=6:00:00
+```
 
 ## Literature Review
 
