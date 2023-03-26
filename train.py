@@ -99,9 +99,9 @@ def train():
 
     # Create Train and validation dataset (validation to test accuracy after every epoch)
     if cfg['dataset']['dataset'] == 'pascal':
-        dataset_train = VOCSegmentation('data/pascal',
+        dataset_train = VOCSegmentation(cfg['dataset']['root'],
                                         train=True, crop_size=cfg['train']['crop_size'])
-        dataset_val = VOCSegmentation('data/pascal',
+        dataset_val = VOCSegmentation(cfg['dataset']['root'],
                                       train=False)
     elif cfg['dataset']['dataset'] == 'cityscapes':
         dataset_train = Cityscapes(cfg['dataset']['root'],
@@ -109,14 +109,14 @@ def train():
         dataset_val = Cityscapes(cfg['dataset']['root'],
                                  train=False)
     elif cfg['dataset']['dataset'] == 'rellis':
-        dataset_train = Rellis3D('data/rellis',
+        dataset_train = Rellis3D(cfg['dataset']['root'],
                            train=True, crop_size=cfg['train']['crop_size'])
-        dataset_val = Rellis3D('data/rellis',
+        dataset_val = Rellis3D(cfg['dataset']['root'],
                            train=False)
     elif cfg['dataset']['dataset'] == 'lpcvc':
-        dataset_train = lpcvc('data/lpcvc',
+        dataset_train = lpcvc(cfg['dataset']['root'],
                            train=True, crop_size=cfg['train']['crop_size'])
-        dataset_val = lpcvc('data/lpcvc',
+        dataset_val = lpcvc(cfg['dataset']['root'],
                            train=False)
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
@@ -198,7 +198,7 @@ def train():
         else:
             print('=> no checkpoint found at {0}'.format(cfg['train']['resume']))
 
-    print('Training...\n')
+    print(f'Training for {cfg["train"]["end_epoch"]} epochs...\n')
     start_epoch = cfg['train']['start_epoch']
     end_epoch = cfg['train']['end_epoch']
     best_miou_name = None 
