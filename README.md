@@ -7,6 +7,12 @@ pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 -f https://download.py
 ```
 
 ## Running the Project Locally 
+
+### Activate the Conda Environment
+```bash
+source activate low-power
+```
+
 ### Train
 ```bash
 python train.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
