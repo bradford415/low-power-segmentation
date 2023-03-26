@@ -43,3 +43,5 @@ You can view the job status at any point using ```qstat -u <username>```
   - Structured pruning of convolutional kernels
 - [Pruning and Quantization for Deep Neural Network Acceleration: A Survey](https://arxiv.org/abs/2101.09671)
   - Survey on pruning and quantization
+- [A Systematic DNN Weight Pruning Framework using Alternating Direction Method of Multipliers](https://arxiv.org/abs/1804.03294)
+  - ADMM pruning
