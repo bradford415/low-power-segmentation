@@ -120,7 +120,7 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     return image, mask
 
 
-def colorize(prediction, save_name, cmap='cityscapes'):
+def colorize(image, prediction, save_name, cmap='cityscapes'):
     prediction = prediction.numpy().squeeze().astype(np.uint8)
     pred_pil = Image.fromarray(prediction)
     pred_pil.putpalette(cmap)

@@ -122,6 +122,7 @@ def test():
                 image_name = os.path.join(image_path,
                     dataset_test.masks[index].split('/')[-1]) 
                 colorize(pred, image_name, cmap)
+                print(dataset_test.images[index])
             print('eval: {0}/{1}'.format(index + 1, len(dataset_test)))
             inter, union = inter_and_union(
                 pred, target, len(dataset_test.CLASSES))
