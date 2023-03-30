@@ -5,6 +5,9 @@ import random
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from pathlib import Path
 from PIL import Image
 
 
@@ -120,9 +123,40 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     return image, mask
 
 
-def colorize(prediction, save_name, cmap='cityscapes'):
+def colorize(image_path, prediction, save_name, cmap, labels):
+    """Apply a colormap to the prediction"""
     prediction = prediction.numpy().squeeze().astype(np.uint8)
     pred_pil = Image.fromarray(prediction)
-    pred_pil.putpalette(cmap)
-    pred_pil.save(save_name)
-    
+    pred_pil.putpalette(np.array(cmap).flatten().tolist())
+
+    image = Image.open(image_path)
+    #https://stackoverflow.com/questions/30227466/combine-several-images-horizontally-with-python
+    images = [image, pred_pil]
+    widths, heights = zip(*(i.size for i in images))
+
+    total_width = sum(widths)
+    max_height = max(heights)
+
+    new_im = Image.new('RGB', (total_width, max_height))
+
+    # Horizontally concatenate raw and predicted image
+    x_offset = 0
+    for im in images:
+        new_im.paste(im, (x_offset,0))
+        x_offset += im.size[0]
+
+    # Label the predicted segmentation map
+    colors = [ [color[0] / 255, color[1] / 255, color[2] / 255] 
+               for color in cmap]
+    labels = [label for label in labels]
+    plt.figure(figsize = (9,9))
+    ax = plt.imshow(new_im)
+    plt.title(Path(image_path).stem)
+    plt.axis('off')
+    patches = [ mpatches.Patch(color=colors[i], label="{l}".format(l=labels[i]) ) for i in range(len(labels)) ]
+    plt.legend(handles=patches, bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0, ncol=2, 
+               handleheight=1.1, handlelength=2.3, labelspacing=1, columnspacing=0.8, fontsize='large')
+
+    plt.savefig(save_name, bbox_inches='tight')    
+    plt.close() # Save memory
+

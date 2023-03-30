@@ -1,6 +1,6 @@
 cudnn:
   benchmark: true
-gpus: [0, 1]
+gpus: [0]
 workers: 4
 dataset:
   dataset: lpcvc
@@ -24,6 +24,6 @@ train:
 test:
   batch_size: 1
   shuffle: false
-  model_path: 'trained-models/model_best_miou_74-46.pt'
+  model_path: 'trained-models/model_best_miou_51-55.pt'
   save_images: True
 

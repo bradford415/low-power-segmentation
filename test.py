@@ -18,7 +18,7 @@ from datetime import datetime
 # Import local files
 from networks import deeplabv3
 from utils import AverageMeter, inter_and_union
-from utils import colorize, color_maps
+from utils import colorize, color_maps, labels
 from datasets import VOCSegmentation
 from datasets import Cityscapes
 from datasets import Rellis3D
@@ -64,7 +64,8 @@ def test():
         image_path = os.path.join('output', 'inference', model_dirname, 'images')
         Path(image_path).mkdir(parents=True, exist_ok=True)
 
-    cmap = np.array(color_maps[cfg['dataset']['dataset']]).flatten().tolist()
+    cmap = color_maps[cfg['dataset']['dataset']]
+    color_labels =  labels[cfg['dataset']['dataset']]
     if cfg['dataset']['dataset'] == 'pascal':
         dataset_test = VOCSegmentation(cfg['dataset']['root'],
                                   train=False, crop_size=None)#crop_size=args.crop_size)
@@ -77,7 +78,7 @@ def test():
                              train=False, crop_size=None)#crop_size=args.crop_size)
     
     elif cfg['dataset']['dataset'] == 'lpcvc':
-        dataset_test = Rellis3D(cfg['dataset']['root'],
+        dataset_test = lpcvc(cfg['dataset']['root'],
                              train=False, crop_size=None)#crop_size=args.crop_size) 
         
     else:
@@ -121,7 +122,8 @@ def test():
             if cfg['test']['save_images']:
                 image_name = os.path.join(image_path,
                     dataset_test.masks[index].split('/')[-1]) 
-                colorize(pred, image_name, cmap)
+                img_path = dataset_test.images[index] 
+                colorize(img_path, pred, image_name, cmap, color_labels)
             print('eval: {0}/{1}'.format(index + 1, len(dataset_test)))
             inter, union = inter_and_union(
                 pred, target, len(dataset_test.CLASSES))

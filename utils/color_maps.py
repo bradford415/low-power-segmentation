@@ -42,7 +42,23 @@ color_maps = {
         [134, 255, 239], # puddle
         [99, 66, 34], # mud
         [110, 22, 138] # rubble
-    ] 
+    ],
+    'lpcvc': [
+        [0, 0, 0], # background
+        [0, 102, 0], 
+        [0, 255, 0], 
+        [0, 153, 153], 
+        [0, 128, 255], 
+        [0, 0, 255], 
+        [255, 255, 0], 
+        [255, 0, 127], 
+        [64, 64, 64], 
+        [255, 0, 0], 
+        [102, 0, 0], 
+        [204, 153, 255],
+        [102, 0, 204], 
+        [255, 153, 204]
+    ]
 }
 
 labels = {
@@ -88,5 +104,21 @@ labels = {
         "puddle",
         "mud",
         "rubble"
-    ] 
+    ],
+    'lpcvc': [
+        'background', 
+        'avalanche', 
+        'building_undamaged', 
+        'building_damaged', 
+        'cracks/fissure/subsidence', 
+        'debris/mud/rock_flow', 
+        'fire/flare', 
+        'flood/water/river/sea',
+        'ice_jam_flow', 
+        'lava_flow', 
+        'person', 
+        'pyroclastic_flow', 
+        'road/railway/bridge', 
+        'vehicle'
+    ]
 }

@@ -49,7 +49,6 @@ class lpcvc(Dataset):
 
         if self.target_transform is not None:
             _target = self.target_transform(_target)
-        #print(self.images[index])
         return _img, _target
     
     def _get_files(self, dataset_split, data_type):
