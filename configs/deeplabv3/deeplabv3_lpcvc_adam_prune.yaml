@@ -4,7 +4,7 @@ gpus: [0]
 workers: 4
 dataset:
   dataset: lpcvc
-  root: data/lpcvc
+  root: /home/eceftl7/datasets/lpcvc
   num_classes: 14
 model:
   backbone: resnet101
@@ -13,9 +13,11 @@ train:
   shuffle: true
   crop_size: 512
   start_epoch: 0
-  end_epoch: 50
-  optimizer: sgd
-  base_lr: 0.007
+  end_epoch: 10
+  prune_epoch: 10
+  fine_tune: 10
+  optimizer: adam
+  base_lr: 0.0001
   last_mult: 1.0
   momentum: 0.9
   weight_decay: 0.0001

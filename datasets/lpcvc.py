@@ -27,8 +27,8 @@ class lpcvc(Dataset):
         self.crop_size = crop_size
 
         dataset_split = 'LPCVC_Train' if self.train else 'LPCVC_Val'
-        self.images = self._get_files(dataset_split, 'IMG')
-        self.masks = self._get_files(dataset_split, 'GT')
+        self.images = self._get_files(dataset_split, 'IMG')[:100]
+        self.masks = self._get_files(dataset_split, 'GT')[:100]
         self.num_samples = len(self.images)
         assert len(self.images) == len(self.masks)
 

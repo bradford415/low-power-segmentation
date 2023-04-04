@@ -20,7 +20,6 @@ from PIL import Image
 from pathlib import Path
 from datetime import datetime
 
-
 # Import local files
 from networks import deeplabv3
 from utils import AverageMeter, inter_and_union
@@ -28,6 +27,11 @@ from datasets import VOCSegmentation
 from datasets import Cityscapes
 from datasets import Rellis3D
 from datasets import lpcvc
+
+# Import ADMM functions
+from pruning import regularized_nll_loss, admm_loss, \
+    initialize_Z_and_U, update_X, update_Z, update_Z_l1, update_U, \
+    print_convergence, print_prune, apply_prune, apply_l1_prune
 
 
 parser = argparse.ArgumentParser()
@@ -114,15 +118,15 @@ def train():
         dataset_val = Rellis3D('data/rellis',
                            train=False)
     elif cfg['dataset']['dataset'] == 'lpcvc':
-        dataset_train = lpcvc('data/lpcvc',
+        dataset_train = lpcvc(cfg['dataset']['root'],
                            train=True, crop_size=cfg['train']['crop_size'])
-        dataset_val = lpcvc('data/lpcvc',
+        dataset_val = lpcvc(cfg['dataset']['root'],
                            train=False)
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
 
     print(f'\nNumber of train samples: {dataset_train.num_samples}')
-    print(f'Number of validation samples: {dataset_val.num_samples}')
+    print(f'Number of validation samples: {dataset_val.num_samples}\n')
 
     # In this case, getattr() is calling a function from deeplab.py file to return the model
     # and the following parenthesis pass arguments to this 'resnet101' function
@@ -178,12 +182,20 @@ def train():
     if cfg['train']['optimizer'] == 'sgd':
         optimizer = optim.SGD(params_to_optimize, lr=cfg['train']['base_lr'],
                             momentum=cfg['train']['momentum'], weight_decay=cfg['train']['weight_decay'])
+    elif cfg['train']['optimizer'] == 'adam':
+        optimizer = optim.Adam(params_to_optimize, lr=cfg['train']['base_lr'],
+                            betas=cfg['train']['betas'], weight_decay=cfg['train']['weight_decay'])
     losses = AverageMeter()
         
     loader_train = torch.utils.data.DataLoader(dataset_train, **train_kwargs)
     loader_val = torch.utils.data.DataLoader(dataset_val, **val_kwargs)
 
     max_iterations = cfg['train']['end_epoch'] * len(loader_train)
+
+    # Print some hyperparameters
+    print(f'Epochs: {cfg["train"]["end_epoch"]-cfg["train"]["start_epoch"]}')
+    print(f'Optimizer: {cfg["train"]["optimizer"]}')
+    print(f'Base lr: {cfg["train"]["base_lr"]}')
 
     # Resume not tested yet
     if cfg['train']['resume']:
@@ -248,7 +260,30 @@ def train():
                 # Inter and union are based on the prediction and groud truth mask
                 inter_meter.update(inter)
                 union_meter.update(union)
-
+        
+        ####################### START HERE###################### After testing adam
+        # After training and evaluating, run ADMM pruning loop
+        admm_epochs = cfg['train']['prune_epoch']
+        model.train()
+        print('ADMM pruning...')
+        Z, U = initialize_Z_and_U(model)
+        for epoch in range(start_epoch, admm_epochs):
+            print(f'Epoch: {epoch+1}: ')
+            for index, (data, target) in enumerate(tqdm(loader_train, ascii=' >=')):
+                data, target = data.to(device), target.to(device)
+                
+                optimizer.zero_grad()
+                output = model(data)
+                loss = admm_loss(args, device, model, Z, U, output, target)
+                loss.backward()
+                optimizer.step()
+                print("###############################")
+            X = update_X(model)
+            Z = update_Z_l1(X, U, args) if args.l1 else update_Z(X, U, args)
+            U = update_U(U, X, Z)
+            print_convergence(model, X, Z)
+            #test(args, model, device, test_loader)
+        
 
         iou = inter_meter.sum / (union_meter.sum + 1e-10) # Calculate IoU for each class
         miou = iou.mean()
