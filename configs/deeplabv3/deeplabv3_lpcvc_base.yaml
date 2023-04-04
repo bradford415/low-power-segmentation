@@ -4,7 +4,7 @@ gpus: [0, 1]
 workers: 4
 dataset:
   dataset: lpcvc
-  root: data/lpcvc
+  root: /media/eceftl11/a41491ac-71f0-4b6e-9240-033ae2892263/low-power/data/lpcvc
   num_classes: 14
 model:
   backbone: resnet101
