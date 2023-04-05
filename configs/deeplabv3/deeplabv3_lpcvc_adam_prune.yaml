@@ -1,5 +1,5 @@
 cudnn:
-  benchmark: true
+  benchmark: True
 gpus: [0]
 workers: 4
 dataset:
@@ -13,9 +13,7 @@ train:
   shuffle: true
   crop_size: 512
   start_epoch: 0
-  end_epoch: 10
-  prune_epoch: 10
-  fine_tune: 10
+  end_epoch: 1
   optimizer: adam
   base_lr: 0.0001
   last_mult: 1.0
@@ -24,6 +22,10 @@ train:
   betas: [0.9, 0.999]
   ignore_label: 255
   resume: False
+prune:
+  prune: True
+  prune_epoch: 10
+  fine_tune: 10
 test:
   batch_size: 1
   shuffle: false

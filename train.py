@@ -31,7 +31,8 @@ from datasets import lpcvc
 # Import ADMM functions
 from pruning import regularized_nll_loss, admm_loss, \
     initialize_Z_and_U, update_X, update_Z, update_Z_l1, update_U, \
-    print_convergence, print_prune, apply_prune, apply_l1_prune
+    print_convergence, print_prune, apply_prune, apply_l1_prune, \
+    PruneAdam
 
 
 parser = argparse.ArgumentParser()
@@ -179,7 +180,10 @@ def train():
         {'params': filter(lambda p: p.requires_grad, backbone_params)},
         {'params': filter(lambda p: p.requires_grad, aspp_params)}
     ]
-    if cfg['train']['optimizer'] == 'sgd':
+    if cfg['prune']['prune'] == 'prune':
+        optimizer = PruneAdam(params_to_optimize, lr=cfg['train']['base_lr'],
+                            momentum=cfg['train']['momentum'], weight_decay=cfg['train']['weight_decay'])
+    elif cfg['train']['optimizer'] == 'sgd':
         optimizer = optim.SGD(params_to_optimize, lr=cfg['train']['base_lr'],
                             momentum=cfg['train']['momentum'], weight_decay=cfg['train']['weight_decay'])
     elif cfg['train']['optimizer'] == 'adam':
@@ -261,28 +265,28 @@ def train():
                 inter_meter.update(inter)
                 union_meter.update(union)
         
-        ####################### START HERE###################### After testing adam
-        # After training and evaluating, run ADMM pruning loop
-        admm_epochs = cfg['train']['prune_epoch']
-        model.train()
-        print('ADMM pruning...')
-        Z, U = initialize_Z_and_U(model)
-        for epoch in range(start_epoch, admm_epochs):
-            print(f'Epoch: {epoch+1}: ')
-            for index, (data, target) in enumerate(tqdm(loader_train, ascii=' >=')):
-                data, target = data.to(device), target.to(device)
-                
-                optimizer.zero_grad()
-                output = model(data)
-                loss = admm_loss(args, device, model, Z, U, output, target)
-                loss.backward()
-                optimizer.step()
-                print("###############################")
-            X = update_X(model)
-            Z = update_Z_l1(X, U, args) if args.l1 else update_Z(X, U, args)
-            U = update_U(U, X, Z)
-            print_convergence(model, X, Z)
-            #test(args, model, device, test_loader)
+    ####################### START HERE###################### After testing adam
+    # After training and evaluating, run ADMM pruning loop
+    admm_epochs = cfg['train']['prune_epoch']
+    model.train()
+    print('ADMM pruning...')
+    Z, U = initialize_Z_and_U(model)
+    for epoch in range(start_epoch, admm_epochs):
+        print(f'Epoch: {epoch+1}: ')
+        for index, (data, target) in enumerate(tqdm(loader_train, ascii=' >=')):
+            data, target = data.to(device), target.to(device)
+            
+            optimizer.zero_grad()
+            output = model(data)
+            loss = admm_loss(args, device, model, Z, U, output, target, criterion)
+            loss.backward()
+            optimizer.step()
+        X = update_X(model)
+        #Z = update_Z_l1(X, U, args) if args.l1 else update_Z(X, U, args)
+        Z = update_Z(X, U)
+        U = update_U(U, X, Z)
+        print_convergence(model, X, Z)
+        #test(args, model, device, test_loader)
         
 
         iou = inter_meter.sum / (union_meter.sum + 1e-10) # Calculate IoU for each class

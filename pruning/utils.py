@@ -17,9 +17,9 @@ def regularized_nll_loss(args, model, output, target):
     return loss
 
 
-def admm_loss(args, device, model, Z, U, output, target):
+def admm_loss(args, device, model, Z, U, output, target, criterion):
     idx = 0
-    loss = F.cross_entropy(output, target)
+    loss = criterion(output, target)#F.cross_entropy(output, target)
     for name, param in model.named_parameters():
         if name.split('.')[-1] == "weight":
             u = U[idx].to(device)
@@ -49,12 +49,14 @@ def update_X(model):
     return X
 
 
-def update_Z(X, U, args):
+def update_Z(X, U, percent=[0.8, 0.92, 0.991, 0.93]):
     new_Z = ()
     idx = 0
+    percent = 0.8
     for x, u in zip(X, U):
         z = x + u
-        pcen = np.percentile(abs(z), 100*args.percent[idx])
+        #pcen = np.percentile(abs(z), 100*percent[idx])
+        pcen = np.percentile(abs(z), 100*percent)
         under_threshold = abs(z) < pcen
         z.data[under_threshold] = 0
         new_Z += (z,)
