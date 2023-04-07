@@ -59,3 +59,6 @@ qsub -I -q viprgs -l select=1:ncpus=20:ngpus=2:mem=128gb:gpu_model=a100,walltime
 
 ### Quantization
 - [Fundamentals of Quantization](https://pytorch.org/blog/quantization-in-practice/#fundamentals-of-quantization)
+- [Quantizing deep convolutional networks for efficient inference: A whitepaper
+](https://arxiv.org/abs/1806.08342)
+  - Recommended quanzation protocols (cited a lot by PyTorch)
