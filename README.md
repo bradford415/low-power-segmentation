@@ -62,3 +62,5 @@ qsub -I -q viprgs -l select=1:ncpus=20:ngpus=2:mem=128gb:gpu_model=a100,walltime
 - [Quantizing deep convolutional networks for efficient inference: A whitepaper
 ](https://arxiv.org/abs/1806.08342)
   - Recommended quantization protocols (cited a lot by PyTorch)
+- [Static Quantization with Eager Mode in PyTorch](https://pytorch.org/tutorials/advanced/static_quantization_tutorial.html)
+  - Example for PyTorch Post-training and Quantization-aware training (QAT)
