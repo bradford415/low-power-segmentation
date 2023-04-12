@@ -12,3 +12,5 @@ trained-models/*
 
 # Ignore output directory
 output
+
+quantization/model_quantized.pt

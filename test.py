@@ -103,6 +103,7 @@ def test():
     weights = torch.load(model_weights, map_location=device)
 
     # Remove 'module.' appended by DataParallel() 
+    print(weights['model'])
     state_dict = {k[7:]: v for k,
                 v in weights['model'].items()}
     # Do not need to load optimizer state_dict because it is not used for inference

@@ -4,7 +4,7 @@ gpus: [0]
 workers: 4
 dataset:
   dataset: lpcvc
-  root: data/lpcvc
+  root: /home/eceftl7/datasets/lpcvc
   num_classes: 14
 model:
   backbone: resnet101
@@ -24,6 +24,6 @@ train:
 test:
   batch_size: 1
   shuffle: false
-  model_path: 'trained-models/model_best_miou_51-55.pt'
+  model_path: 'trained-models/model_best_miou_54-85.pt'
   save_images: True
 
