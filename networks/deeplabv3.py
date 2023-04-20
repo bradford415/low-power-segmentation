@@ -158,12 +158,45 @@ class BottleNeck(nn.Module):
         return out
 
 
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None, dilation=1, conv=nn.Conv2d, norm=nn.BatchNorm2d):
+        super(BasicBlock, self).__init__()
+        # Both self.conv1 and self.downsample layers downsample the input when stride != 1
+        self.conv1 = conv(inplanes, planes, kernel_size=3, stride=stride, padding=dilation, dilation=dilation, bias=False)
+        self.bn1 = norm(planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = conv(planes, planes, kernel_size=3, padding=dilation, dilation=dilation, bias=False)
+        self.bn2 = norm(planes)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+
+        return out
+
+
 class ResNet(nn.Module):
     """ResNet model modified for deeplab"""
     
     def __init__(self, block, layers, num_classes):
         super().__init__()
-        self.inplanes = 64 # PyTorch refers to planes as the number of channels for some reason
+        self.inplanes = 64 # DeepLab refers to planes as the number of channels for some reason
         self.dilation = 1
         self.conv = nn.Conv2d # Mostly use for 1x1 convolutions
         self.norm = nn.BatchNorm2d
@@ -214,7 +247,7 @@ class ResNet(nn.Module):
         # This happens at the end of the the first BottleNeck for each group of 
         # BottleNeck blocks (every time _makelayer is called except for the first one)
         # The number of BottleNecks is specified by the layers[] list in __init__().
-        if dilation !=1 or stride != 1 or self.inplanes != planes*block.expansion:
+        if dilation !=1 or stride != 1 or self.inplanes != planes*block.expansion: 
             downsample = nn.Sequential(
                 self.conv(self.inplanes, planes*block.expansion, # Cannot dilate a 1x1 convolution
                           kernel_size=1, stride=stride, bias=False),
@@ -278,6 +311,30 @@ def create_resnet101(pretrained=False, device='cpu', **kwargs):
         model.load_state_dict(model_dict) # Load pre-trained weights
 
     return model
+
+
+def create_resnet18(pretrained=False, device='cpu', **kwargs):
+    """ Contstruct a ResNet-101 model
+    
+    Args:
+        pretrained (bool): If True, load pre-trained ImageNet weights
+    """
+    model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+    if pretrained:
+        # Only layers that have learnable parameters have entries in the dictionary
+        model_dict = model.state_dict()
+        # Download pre-trained resnet101 model from PyTorch and extract its state_dict()
+        resnet101 = models.resnet18(weights='ResNet18_Weights.IMAGENET1K_V1')
+        pretrained_dict = resnet101.state_dict()
+        # Filter out unncessary keys - only return parameters from the pre-trained
+        # ResNet that matches our ResNet 
+        overlap_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+        # might not be necessary, maybe can just pass overlay_dict to load_state_dict()
+        model_dict.update(overlap_dict) 
+        model.load_state_dict(model_dict) # Load pre-trained weights
+
+    return model
+
 
 
 

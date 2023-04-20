@@ -114,9 +114,9 @@ def train():
         dataset_val = Rellis3D('data/rellis',
                            train=False)
     elif cfg['dataset']['dataset'] == 'lpcvc':
-        dataset_train = lpcvc('data/lpcvc',
+        dataset_train = lpcvc(cfg['dataset']['root'],
                            train=True, crop_size=cfg['train']['crop_size'])
-        dataset_val = lpcvc('data/lpcvc',
+        dataset_val = lpcvc(cfg['dataset']['root'],
                            train=False)
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
@@ -130,6 +130,11 @@ def train():
     # w/o getattr()
     if cfg['model']['backbone'] == 'resnet101':
         model = getattr(deeplabv3, 'create_resnet101')(
+            pretrained=(not False),
+            device=device,
+            num_classes=len(dataset_train.CLASSES))
+    elif cfg['model']['backbone'] == 'resnet18':
+        model = getattr(deeplabv3, 'create_resnet18')(
             pretrained=(not False),
             device=device,
             num_classes=len(dataset_train.CLASSES))
