@@ -7,13 +7,13 @@ dataset:
   root: /home/eceftl7/datasets/lpcvc
   num_classes: 14
 model:
-  backbone: resnet101
+  backbone: resnet18
 train:
   batch_size: 8
   shuffle: true
   crop_size: 512
   start_epoch: 0
-  end_epoch: 50
+  end_epoch: 200
   optimizer: sgd
   base_lr: 0.007
   last_mult: 1.0

@@ -1,32 +1,18 @@
-"""Contains components for DeepLabv3: ResNet, BottleNecks, ASPP.
-ResNet class implementation is slightly modified for Deeplab.
-The BottleNeck employs ResNet v1.5 which adds stride to the 3x3
-convolution and removes it from the 1x1 convolution. 
-Deeplabv3 modifies resnet so that block 4 uses atrous convolutions
-and passes the feature map into an Atrous Spatial Pyramid Pooling module.
-
-This implementation does not include the multi-grid that deeplabv3 uses.
-I did not fully understand how it encorporates multi-grid into ASPP
-so I did not include it.
-
-This file only implements ResNet101. But, from this, ResNet50/101/152 can be
-easily created. ResNet18/34 need an additional class called 'BuildingBlock'
-or 'BasicBlock' as they use this instead of the 'BottleNeck' class.
-
-ResNet Paper: https://arxiv.org/pdf/1512.03385.pdf
-PyTorch ResNet w/ Dilation: https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py 
+"""DeepLabV3 adapated for post training static qunatization in PyTorch 
 """
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 
+from torch.ao.quantization import QuantStub, DeQuantStub
+
 # List of backbones
 # Double underscore is just naming convention, 
 # allows you to use all as a variable and ignores the 'all' keyword/function
 __all___ = ['resnet101'] 
 
-class ASPP(nn.Module):
+class QuantizedASPP(nn.Module):
 
     def __init__(self, C, depth, num_classes, conv=nn.Conv2d, norm=nn.BatchNorm2d, momentum=0.0003, mult=1):
         """
@@ -43,7 +29,12 @@ class ASPP(nn.Module):
         # This is explained in the deeplabv3 paper section 3.3. This is  performed 
         # in the x5 step
         self.global_pooling = nn.AdaptiveAvgPool2d(1) # Global pooling, output size 1
-        self.relu = nn.ReLU(inplace=True)
+        self.relu1 = nn.ReLU(inplace=True)
+        self.relu2 = nn.ReLU(inplace=True)
+        self.relu3 = nn.ReLU(inplace=True)
+        self.relu4 = nn.ReLU(inplace=True)
+        self.relu5 = nn.ReLU(inplace=True)
+        self.relu6 = nn.ReLU(inplace=True)
         # Defining convolutions with atrous rates [6, 12, 18]
         self.aspp1 = conv(C,depth, kernel_size=1, stride=1, bias=False)
         self.aspp2 = conv(C, depth, kernel_size=3, stride=1, # padding prevents downsampling
@@ -66,23 +57,23 @@ class ASPP(nn.Module):
         # perform 5 different convolutions, each using the orignal data x
         x1 = self.aspp1(x)
         x1 = self.aspp1_bn(x1)
-        x1 = self.relu(x1)
+        x1 = self.relu1(x1)
         x2 = self.aspp2(x)
         x2 = self.aspp2_bn(x2)
-        x2 = self.relu(x2)
+        x2 = self.relu2(x2)
         x3 = self.aspp3(x)
         x3 = self.aspp3_bn(x3)
-        x3 = self.relu(x3)
+        x3 = self.relu3(x3)
         x4 = self.aspp4(x)
         x4 = self.aspp4_bn(x4)
-        x4 = self.relu(x4)
+        x4 = self.relu4(x4)
         # x5 is used to incorporate global context information
         # AdapativeAvgPooling(1) returns only 1 pixel from each feature map 
         # so they need to be upsampled to the original feature map size of x
         x5 = self.global_pooling(x)
         x5 = self.aspp5(x5)
         x5 = self.aspp5_bn(x5)
-        x5 = self.relu(x5)
+        x5 = self.relu5(x5)
         # Upsampling to orignal feature map (x) size
         x5 = nn.Upsample((x.shape[2], x.shape[3]), mode='bilinear', 
                          align_corners=True)(x5) # shape[2]=height, shape[3]=width
@@ -95,21 +86,35 @@ class ASPP(nn.Module):
         # Fuse concatenated feature maps using 1x1 convolutions
         x = self.conv2(x)
         x = self.bn2(x)
-        x = self.relu(x)
+        x = self.relu6(x)
         # Generate the final logits using 1x1 convolution creating
         # the # of output channels = # of classes
         x = self.conv3(x)
         
         return x
+    
+    def fuse_model(self):
+        """Fuse ASPP Module"""
+        torch.ao.quantization.fuse_modules(
+            self, 
+            [["aspp1", "aspp1_bn", "relu1"], 
+             ["aspp2", "aspp2_bn", "relu2"], 
+             ["aspp3", "aspp3_bn", "relu3"],
+             ["aspp4", "aspp4_bn", "relu4"],
+             ["aspp5", "aspp5_bn", "relu5"],  # pooling fusion not yet supported
+             ["conv2", "bn2", "relu6"]],
+            inplace=True
+        )
 
-class BottleNeck(nn.Module):
+
+class QuantizedBottleNeck(nn.Module):
     """Modified BuildingBlock for deeper ResNets (50, 101, 152).
-    Each BottleNeck has 3 layers instead of 2. The 3 layers are 1x1, 3x3, and 1x1 convolutions.
+    Each QuantizedBottleNeck has 3 layers instead of 2. The 3 layers are 1x1, 3x3, and 1x1 convolutions.
     The 1x1 layers are responsible for reducing and then increasing (restoring) dimensions
     
     """
 
-    # Value to multiply the output channels by in the last 1x1 BottleNeck layer (Fig. 5 & Table 1)
+    # Value to multiply the output channels by in the last 1x1 QuantizedBottleNeck layer (Fig. 5 & Table 1)
     expansion = 4  
 
     def __init__(self, inplanes, planes, stride=1, downsample=None, dilation=1, conv=nn.Conv2d, norm=nn.BatchNorm2d):
@@ -118,17 +123,20 @@ class BottleNeck(nn.Module):
         # self.downsample when stride > 1
         self.conv1 = conv(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = norm(planes)
-        # BottleNeck is formed here bc conv1 has fewer output channels (planes) than input channels (inplanes)
+        # QuantizedBottleNeck is formed here bc conv1 has fewer output channels (planes) than input channels (inplanes)
         # Similarily, Conv3 takes fewer input channels and output greater channels.
         self.conv2 = conv(planes, planes, kernel_size=3, stride=stride,
                                dilation=dilation, padding=dilation, bias=False)
         self.bn2 = norm(planes)
-        # 3rd BottleNeck layer multiply out_channels by 4
+        # 3rd QuantizedBottleNeck layer multiply out_channels by 4
         self.conv3 = conv(planes, planes * self.expansion, kernel_size=1, bias=False)
         self.bn3 = norm(planes * self.expansion)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu1 = nn.ReLU(inplace=True) # Need separate relus to work with quant
+        self.relu2 = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
+
+        self.add_relu = torch.nn.quantized.FloatFunctional()
 
     def forward(self, x):
         """Perform a normal forward pass, then add the original input to the output
@@ -138,11 +146,11 @@ class BottleNeck(nn.Module):
 
         out = self.conv1(x) # uses 'out' variable bc you do not want to modify x
         out = self.bn1(out)
-        out = self.relu(out)
+        out = self.relu1(out)
 
         out = self.conv2(out)
         out = self.bn2(out)
-        out = self.relu(out)
+        out = self.relu2(out)
 
         out = self.conv3(out)
         out = self.bn3(out)
@@ -152,43 +160,23 @@ class BottleNeck(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out += identity
-        out = self.relu(out)
+        #out += identity
+        #out = self.relu(out)
+        out = self.add_relu.add_relu(out, identity) # performs an add, then performs a relu
 
         return out
-
-
-class BasicBlock(nn.Module):
-    expansion = 1
-
-    def __init__(self, inplanes, planes, stride=1, downsample=None, dilation=1, conv=nn.Conv2d, norm=nn.BatchNorm2d):
-        super(BasicBlock, self).__init__()
-        # Both self.conv1 and self.downsample layers downsample the input when stride != 1
-        self.conv1 = conv(inplanes, planes, kernel_size=3, stride=stride, padding=dilation, dilation=dilation, bias=False)
-        self.bn1 = norm(planes)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv(planes, planes, kernel_size=3, padding=dilation, dilation=dilation, bias=False)
-        self.bn2 = norm(planes)
-        self.downsample = downsample
-        self.stride = stride
-
-    def forward(self, x):
-        identity = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-
-        if self.downsample is not None:
-            identity = self.downsample(x)
-
-        out += identity
-        out = self.relu(out)
-
-        return out
+    
+    def fuse_model(self):
+        """Fuse QuantizedBottleNeck Module"""
+        torch.ao.quantization.fuse_modules(
+            self, 
+            [["conv1", "bn1", "relu1"], 
+             ["conv2", "bn2", "relu2"], 
+             ["conv3", "bn3"]],
+            inplace=True
+        )
+        if self.downsample:
+            torch.ao.quantization.fuse_modules(self.downsample, ["0", "1"], inplace=True)
 
 
 class ResNet(nn.Module):
@@ -196,7 +184,7 @@ class ResNet(nn.Module):
     
     def __init__(self, block, layers, num_classes):
         super().__init__()
-        self.inplanes = 64 # DeepLab refers to planes as the number of channels for some reason
+        self.inplanes = 64 # PyTorch refers to planes as the number of channels for some reason
         self.dilation = 1
         self.conv = nn.Conv2d # Mostly use for 1x1 convolutions
         self.norm = nn.BatchNorm2d
@@ -226,7 +214,10 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=2)
          # Apply dilation only for block 4. If replace_stride_with_dilation[i]=True,
          # _make_layer() will set to stride to 1 and dilation will equal the stride argument value, this case 2
-        self.aspp = ASPP(512*block.expansion, 256, num_classes, conv=self.conv, norm=self.norm)
+        self.aspp = QuantizedASPP(512*block.expansion, 256, num_classes, conv=self.conv, norm=self.norm)
+
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1):
         """Create convolutional blocks w/ hyperparameters specified by resnet.
@@ -234,7 +225,7 @@ class ResNet(nn.Module):
 
         Args:
             block: The type of block to add. ResNet-18/34 uses 'BasicBlock' (BuidlingBlock
-                    in ResNet paper) and ResNet-50/101/152 uses 'BottleNeck' block
+                    in ResNet paper) and ResNet-50/101/152 uses 'QuantizedBottleNeck' block
             planes: Refers to the number of channels, (I'm not sure why they call them planes).
                     Inplanes is the number of input channels to the conv layer I think.
             num_blocks: The number of blocks to add per 'building', this will depend on the
@@ -244,10 +235,10 @@ class ResNet(nn.Module):
         downsample = None
         # previous_dilation = self.dilation 
         # If you are downsampling the feature map. 
-        # This happens at the end of the the first BottleNeck for each group of 
-        # BottleNeck blocks (every time _makelayer is called except for the first one)
-        # The number of BottleNecks is specified by the layers[] list in __init__().
-        if dilation !=1 or stride != 1 or self.inplanes != planes*block.expansion: 
+        # This happens at the end of the the first QuantizedBottleNeck for each group of 
+        # QuantizedBottleNeck blocks (every time _makelayer is called except for the first one)
+        # The number of QuantizedBottleNecks is specified by the layers[] list in __init__().
+        if dilation !=1 or stride != 1 or self.inplanes != planes*block.expansion:
             downsample = nn.Sequential(
                 self.conv(self.inplanes, planes*block.expansion, # Cannot dilate a 1x1 convolution
                           kernel_size=1, stride=stride, bias=False),
@@ -255,10 +246,10 @@ class ResNet(nn.Module):
             )   
         
         """From the original ResNet paper, after the block of 64 kernels, starting at 128, 
-        the first BottleNeck in a group downsamples during the 1st 1x1 Conv and at the end of 
-        the BottleNeck, every block after will not. We start the for loop at 1 to skip this 
+        the first QuantizedBottleNeck in a group downsamples during the 1st 1x1 Conv and at the end of 
+        the QuantizedBottleNeck, every block after will not. We start the for loop at 1 to skip this 
         first downsampling layer we already appended. According to a new paper, 
-        https://arxiv.org/abs/1512.03385, downsampling, w/ stride > 1, in the BottleNeck 
+        https://arxiv.org/abs/1512.03385, downsampling, w/ stride > 1, in the QuantizedBottleNeck 
         during the first 3x3 convolution (instead of the first 1x1) improves accuracy and is what 
         the PyTorch github implements. This variant is called ResNet V1.5. Similarily, they 
         downsample in the 'BasicBlock' on first 3x3 conv layer of each group of blocks, but not 
@@ -275,6 +266,7 @@ class ResNet(nn.Module):
     
     def forward(self, x):
         size = (x.shape[2], x.shape[3]) # get original image height
+        x = self.quant(x)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -287,16 +279,29 @@ class ResNet(nn.Module):
 
         x = self.aspp(x)
         x = nn.Upsample(size, mode='bilinear', align_corners=True)(x)
-
+        self.dequant(x)
         return x
+    
+    def fuse_model(self):
+        torch.ao.quantization.fuse_modules(
+            self, 
+            ["conv1", "bn1", "relu"], 
+            inplace=True
+        )
+        for m in self.modules():
+            if type(m) == QuantizedBottleNeck or type(m) == QuantizedASPP:
+                m.fuse_model()
 
-def create_resnet101(pretrained=False, device='cpu', **kwargs):
+
+
+
+def create_quant_resnet101(pretrained=False, device='cpu', **kwargs):
     """ Contstruct a ResNet-101 model
     
     Args:
         pretrained (bool): If True, load pre-trained ImageNet weights
     """
-    model = ResNet(BottleNeck, [3, 4, 23, 3], **kwargs)
+    model = ResNet(QuantizedBottleNeck, [3, 4, 23, 3], **kwargs)
     if pretrained:
         # Only layers that have learnable parameters have entries in the dictionary
         model_dict = model.state_dict()
@@ -311,30 +316,6 @@ def create_resnet101(pretrained=False, device='cpu', **kwargs):
         model.load_state_dict(model_dict) # Load pre-trained weights
 
     return model
-
-
-def create_resnet18(pretrained=False, device='cpu', **kwargs):
-    """ Contstruct a ResNet-101 model
-    
-    Args:
-        pretrained (bool): If True, load pre-trained ImageNet weights
-    """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
-    if pretrained:
-        # Only layers that have learnable parameters have entries in the dictionary
-        model_dict = model.state_dict()
-        # Download pre-trained resnet101 model from PyTorch and extract its state_dict()
-        resnet101 = models.resnet18(weights='ResNet18_Weights.IMAGENET1K_V1')
-        pretrained_dict = resnet101.state_dict()
-        # Filter out unncessary keys - only return parameters from the pre-trained
-        # ResNet that matches our ResNet 
-        overlap_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
-        # might not be necessary, maybe can just pass overlay_dict to load_state_dict()
-        model_dict.update(overlap_dict) 
-        model.load_state_dict(model_dict) # Load pre-trained weights
-
-    return model
-
 
 
 
