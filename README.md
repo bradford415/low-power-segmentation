@@ -47,6 +47,9 @@ You can view the job status at any point using ```qstat -u <username>```
 qsub -I -q viprgs -l select=1:ncpus=20:ngpus=2:mem=128gb:gpu_model=a100,walltime=6:00:00
 ```
 
+## Inferecing on the Jetson Nano
+
+
 ## Literature Review
 
 ### Pruning
