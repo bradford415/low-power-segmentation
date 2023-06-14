@@ -3,6 +3,7 @@
 ## Anaconda Environment Setup
 ```bash
 conda env create -f environment.yml
+conda activate low-power
 pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
