@@ -49,8 +49,13 @@ python train.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
 
-## Preparing the Trained Model for the Jetson
+## Preparing the Trained Model for the Jetson Evaluation
 TODO: fill this out
+
+zip the ```solution``` directory and move it to the ```evaluation``` directory with
+```bash
+./compress.sh
+```
 
 ## Running the Project on the Palmetto Super Computer 
 ### Setting Up the PBS Script
