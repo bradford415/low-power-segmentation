@@ -1,4 +1,29 @@
 # Low Power Semantic Segmentation
+TODO: Write the goal of this project
+
+## Table of Contents
+TODO fill this out
+* [File Structure](#file-structure)
+* [Local Setup and Development](#local-setup-and-development)
+* [Launching the Docker Container](#launching-the-docker-container)
+* [Features](#features)
+* [Deploying the Docker Container on the Husky](#deploying-the-docker-container-on-the-husky)
+* [Preparing Datsets](#preparing-datasets)
+* [Publications](#publications)
+
+## File Structure
+TODO: Fill this out
+
+	.
+	├── inference                 # Live inference for .onnx files
+	├── models                    # Train/test segmentation models (e.g., SwiftNet)
+	├── rgb_LiDAR_segmentation    # DeepLabV3+ with RGB/LiDAR fusion (written by Max in MATLAB)
+	├── scripts                   # Helper scripts disconnected from the pipeline
+	├── testing                   # Archive of files which were never integrated into the pipeline (these should not be used)
+	├── Dockerfile
+	├── docker_run.sh	      # Script to run the local docker container
+	└── environment.yml	      # File to setup the anaconda environment
+
 
 ## Anaconda Environment Setup
 ```bash
@@ -23,6 +48,9 @@ python train.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```bash
 python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
+
+## Preparing the Trained Model for the Jetson
+TODO: fill this out
 
 ## Running the Project on the Palmetto Super Computer 
 ### Setting Up the PBS Script
