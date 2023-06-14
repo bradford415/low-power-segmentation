@@ -184,8 +184,10 @@ def train():
         optimizer = optim.SGD(params_to_optimize, lr=cfg['train']['base_lr'],
                             momentum=cfg['train']['momentum'], weight_decay=cfg['train']['weight_decay'])
     losses = AverageMeter()
-        
-    loader_train = torch.utils.data.DataLoader(dataset_train, **train_kwargs)
+    
+    # If the last batch size is 1 drop it or else batch norm will throw an error
+    drop_last_batch = dataset_train.num_samples % cfg['train']['batch_size'] == 1
+    loader_train = torch.utils.data.DataLoader(dataset_train, **train_kwargs, drop_last=True)
     loader_val = torch.utils.data.DataLoader(dataset_val, **val_kwargs)
 
     max_iterations = cfg['train']['end_epoch'] * len(loader_train)
@@ -222,7 +224,6 @@ def train():
 
             # Put tensors on a gpu
             data, target = data.to(device), target.to(device)
-
             optimizer.zero_grad()
             outputs = model(data)
             loss = criterion(outputs, target)

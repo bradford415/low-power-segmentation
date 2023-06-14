@@ -10,7 +10,17 @@ data/*
 trained-models/*
 !trained-models/.gitkeep
 
+# python zips
+*.pyz
+
 # Ignore output directory
 output
 
 quantization/model_quantized.pt
+
+# Ignore the model copied to the solution directory
+solution/*.pt
+
+# Test images in the evaluation dir
+evaluation/test/*
+!evaluation/test/.gitkeep

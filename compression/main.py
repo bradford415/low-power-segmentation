@@ -72,7 +72,7 @@ def main() -> None:
 
 #    model_weights="model.pt"
 
-    device = torch.device('cpu')
+    device = torch.device('gpu')
 
     imageTensor: Tensor = loadImageToTensor(imagePath=args.input)
     

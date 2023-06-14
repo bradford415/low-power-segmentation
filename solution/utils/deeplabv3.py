@@ -24,7 +24,7 @@ from torchvision import models
 # List of backbones
 # Double underscore is just naming convention, 
 # allows you to use all as a variable and ignores the 'all' keyword/function
-__all___ = ['resnet101'] 
+__all___ = ['create_resnet101', 'create_resnet18'] 
 
 class ASPP(nn.Module):
 
@@ -314,7 +314,7 @@ def create_resnet101(pretrained=False, **kwargs):
 
 
 def create_resnet18(pretrained=False, **kwargs):
-    """ Contstruct a ResNet-18 model
+    """ Contstruct a ResNet18 model
     
     Args:
         pretrained (bool): If True, load pre-trained ImageNet weights

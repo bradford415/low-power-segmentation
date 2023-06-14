@@ -1,0 +1,2 @@
+1. look through evlation.bash and get it to running
+2. comment readme

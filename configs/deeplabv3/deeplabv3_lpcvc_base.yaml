@@ -4,12 +4,12 @@ gpus: [0]
 workers: 4
 dataset:
   dataset: lpcvc
-  root: /home/eceftl7/datasets/lpcvc
+  root: /home/bselee/datasets/lpcvc
   num_classes: 14
 model:
   backbone: resnet101
 train:
-  batch_size: 8
+  batch_size: 4
   shuffle: true
   crop_size: 512
   start_epoch: 0
