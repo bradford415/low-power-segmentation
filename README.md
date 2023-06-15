@@ -45,6 +45,9 @@ python train.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
 
 ### Test
+Copy the trained model (```.pt```) into the ```trained-models``` directory and modify the ```model_path``` variable in the config file to the name of the trained model
+
+Run the ```test.py``` by specifying the desired configuartion file (```.yaml```)
 ```bash
 python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
