@@ -12,7 +12,7 @@ from PIL import Image
 
 
 class AverageMeter(object):
-    """Stores loss and intersectin/union pixel values"""
+    """Stores loss and intersection/union pixel values"""
     def __init__(self):
         self.val = None
         self.sum = None
@@ -41,14 +41,15 @@ class AverageMeter(object):
             val: loss value of each mini-batch
             n: batch size
         """
-        self.val = val 
-        self.sum += val * n # estimates loss per sample
+        self.val = val # current value of update
+        self.sum += val * n # estimates loss per sample (n=batch_size)
         self.count += n 
         self.avg = self.sum / self.count # average loss per epoch
         self.ema = self.ema * 0.99 + self.val * 0.01
 
 
 def inter_and_union(pred, mask, num_class):
+    """Returns intersection and union of pixels"""
     # Explanation of this at: https://github.com/bradford415/deeplabv3-pytorch/blob/main/utils.py
     pred = np.asarray(pred, dtype=np.uint8).copy()
     mask = np.asarray(mask, dtype=np.uint8).copy()
@@ -59,7 +60,7 @@ def inter_and_union(pred, mask, num_class):
     pred = pred * (mask > 0)
 
     inter = pred * (pred == mask)
-    (area_inter, _) = np.histogram(inter, bins=num_class, range=(1, num_class))
+    (area_inter, _) = np.histogram(inter, bins=num_class, range=(1, num_class)) # TP
     (area_pred, _) = np.histogram(pred, bins=num_class, range=(1, num_class))
     (area_mask, _) = np.histogram(mask, bins=num_class, range=(1, num_class))
     area_union = area_pred + area_mask - area_inter

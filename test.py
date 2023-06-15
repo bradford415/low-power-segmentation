@@ -87,7 +87,6 @@ def test():
     if cfg['model']['backbone'] == 'resnet101':
         model = getattr(deeplabv3, 'create_resnet101')(
             pretrained=False,
-            device=device,
             num_classes=len(dataset_test.CLASSES))
     else:
         raise ValueError('Unknown backbone: {}'.format(cfg['model']['backbone']))
@@ -102,8 +101,8 @@ def test():
     print(f"Loading model {model_weights}")
     weights = torch.load(model_weights, map_location=device)
 
-    # Remove 'module.' appended by DataParallel() 
-    print(weights['model'])
+    # Remove 'module.' appended by DataParallel() inter_and
+    #print(weights['model'])
     state_dict = {k[7:]: v for k,
                 v in weights['model'].items()}
     # Do not need to load optimizer state_dict because it is not used for inference
@@ -111,8 +110,10 @@ def test():
 
     dataset_loader = torch.utils.data.DataLoader(dataset_test, **test_kwargs)
 
-    inter_meter = AverageMeter()  
-    union_meter = AverageMeter() 
+    inter_meter_miou = AverageMeter()  
+    inter_meter_dice = AverageMeter()  
+    union_meter_miou = AverageMeter() 
+    union_meter_dice = AverageMeter() 
     with torch.inference_mode():  # newer torch.no_grad()
         for index, (data, target) in enumerate(dataset_loader):
             data, target = data.to(device), target.to(device)
@@ -130,10 +131,18 @@ def test():
                 pred, target, len(dataset_test.CLASSES))
             # Keep running sum of intersection and union values of image
             # Inter and union are based on the prediction and groud truth mask
-            inter_meter.update(inter)
-            union_meter.update(union)
+            #print(inter)
+            #print(union)
+            #exit()
+            inter_meter_miou.update(inter)
+            inter_meter_dice.update(inter+inter)
+            union_meter_miou.update(union)
+            union_meter_dice.update(union+inter)
 
-        iou = inter_meter.sum / (union_meter.sum + 1e-10) # 1e-10 is used to prevent division by 0 I think
+        print(inter_meter_miou.sum)
+        iou = inter_meter_miou.sum / (union_meter_miou.sum + 1e-10) # 1e-10 is used to prevent division by 0
+        dice = inter_meter_dice.sum / (union_meter_dice.sum + 1e-10)
+        print(dice)
         # Print and save IoU per class and final mIoU score
         with open(os.path.join(model_path, 'metrics.txt'), 'w') as file:
             for i, val in enumerate(iou):
@@ -141,6 +150,7 @@ def test():
                 file.write('IoU {0}: {1:.2f}\n'.format(
                     dataset_test.CLASSES[i], val * 100))
             print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
+            print('Mean Dice: {0:.2f}'.format(dice.sum()/14))
             file.write('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
 
 

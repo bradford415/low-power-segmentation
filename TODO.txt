@@ -1,2 +1,5 @@
-1. look through evlation.bash and get it to running
-2. comment readme
+- read through evaluation/main.py and understand why dice score is different each run
+- look through evlation.bash and get it to running
+- comment readme
+- Remove compression directory when solution directory works
+
