@@ -103,7 +103,6 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     ])
     image = data_transforms(image)
     mask = torch.LongTensor(np.array(mask).astype(np.int64))
-
     
     
     if crop:

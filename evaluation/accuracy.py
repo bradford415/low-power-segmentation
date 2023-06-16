@@ -10,6 +10,8 @@ class AccuracyTracker(object):
         self.confusion_matrix = numpy.zeros((self.n_classes, self.n_classes))
 
     def _fast_hist(self, label_true, label_pred, n_class):
+        #print(label_true.shape)
+        #exit()
         mask = (label_true >= 0) & (label_true < n_class)
         hist = numpy.bincount(
             n_class * label_true[mask].astype(int) + label_pred[mask],
@@ -22,6 +24,8 @@ class AccuracyTracker(object):
             self.confusion_matrix += self._fast_hist(
                 lt.flatten(), lp.flatten(), self.n_classes
             )
+        #print(self.confusion_matrix.shape)
+        #exit()
 
     def get_scores(self):
         """Returns accuracy score evaluation result.

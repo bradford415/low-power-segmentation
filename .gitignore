@@ -24,3 +24,6 @@ solution/*.pt
 # Test images in the evaluation dir
 evaluation/test/*
 !evaluation/test/.gitkeep
+
+# evaluation solution directory (should automatically be removed by evalute.bash but just in case it isn't)
+evaluation/evalDirectory

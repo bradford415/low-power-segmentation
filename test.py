@@ -11,6 +11,7 @@ import torch.nn as nn
 import torch.optim as optim
 import pdb  # Python debugger
 import numpy as np
+import shutil
 from PIL import Image
 from pathlib import Path
 from datetime import datetime
@@ -59,6 +60,8 @@ def test():
     model_path = os.path.join('output', 'inference', model_dirname)
     model_fpath = os.path.join('output', 'inference', model_dirname, model_fname)
     Path(model_path).mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(args.cfg, f"{model_path}/{args.cfg.split('/')[-1]}")
+
 
     if cfg['test']['save_images']:
         image_path = os.path.join('output', 'inference', model_dirname, 'images')
@@ -101,7 +104,7 @@ def test():
     print(f"Loading model {model_weights}")
     weights = torch.load(model_weights, map_location=device)
 
-    # Remove 'module.' appended by DataParallel() inter_and
+    # Remove 'module.' appended by DataParallel()
     #print(weights['model'])
     state_dict = {k[7:]: v for k,
                 v in weights['model'].items()}

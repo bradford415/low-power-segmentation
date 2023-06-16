@@ -10,6 +10,7 @@ import utils
 import cv2
 from imageio import imread
 from cv2.mat_wrapper import Mat
+from utils import deeplabv3
 import pkg_resources
 import sys
 import os
@@ -54,6 +55,7 @@ def loadImageToTensor(imagePath: str) -> torch.Tensor:
 
     image: Array = imread(uri=imagePath)
     resizedImage: Mat = cv2.resize(image, tuple(SIZE), interpolation=cv2.INTER_AREA)
+
     imageTensor: Tensor = transforms.ToTensor()(resizedImage)
     imageTensor: Tensor = transforms.Normalize(mean=MEAN, std=STANDARD_DEVIATION)(
         imageTensor
@@ -71,11 +73,23 @@ def main() -> None:
     image_files: List[str] = os.listdir(args.input)
 
     with pkg_resources.resource_stream(__name__, modelPath) as model_file:
-        model: utils.ResNet() = utils.create_resnet18(pretrained=False, num_classes=14)#FANet = FANet()
+        model: utils.ResNet() = utils.create_resnet101(pretrained=False, num_classes=14)#FANet = FANet()
+        #model = getattr(deeplabv3, 'create_resnet101')(
+        #    pretrained=False,
+        #    #device=device,
+        #    num_classes=14
+        #    )
         device = torch.device("cuda")
         model.to(device)
+
+        weights = torch.load(model_file, map_location=device)
+        # MUST REMOVE THE FIRST 7 CHARS CREATED BY DATAPARALLEL, 
+        # NO WARNING WAS THROWN WHEN I SKIPPED THIS
+        state_dict = {k[7:]: v for k,
+                v in weights['model'].items()}
         model.load_state_dict(
-                state_dict=torch.load(f=model_file, map_location=torch.device("cuda")), strict=False
+                #state_dict=torch.load(f=model_file, map_location=torch.device("cuda")), strict=False
+                state_dict=state_dict, strict=False
         )
         model.eval()
         start, end = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)

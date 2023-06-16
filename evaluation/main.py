@@ -52,13 +52,20 @@ def loadGroundTruthImage(imagePath: str) -> ndarray:
         resizedImage, tuple(SIZE), interpolation=cv2.INTER_NEAREST
     )
     outputImage: ndarray = resizedImage[numpy.newaxis, :, :]
-
     return outputImage
 
 def get_score(image, groundTruth):
+    """
+    params:
+        image:
+        groundTruth
+    """
     accuracyTracker: AccuracyTracker = AccuracyTracker(n_classes=14)
     groundTruthArray: ndarray = loadGroundTruthImage(imagePath=groundTruth)
     outArray: ndarray = loadGroundTruthImage(imagePath=image)
+    #print(outArray)
+    #print(groundTruthArray)
+    #exit()
     accuracyTracker.update(groundTruthArray, outArray)
     accuracyTracker.get_scores()
     return accuracyTracker.mean_dice

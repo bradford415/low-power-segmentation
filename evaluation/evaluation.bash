@@ -67,5 +67,5 @@ echo "Calulated Score: ${score}"
 json='{"mean_dice":"'${mean_dice}'","mean_speed":"'${mean_speed}'","score":"'${score}'"}'
 echo "$json" > $path/output/$submissionName.json
 echo "$submissionName"
-rm -rf $eval
+rm -rf $eval # comment this line to save the predicted segmented images
 exit $exit_code

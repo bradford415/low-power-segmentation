@@ -30,6 +30,18 @@ class lpcvc(Dataset):
         self.images = self._get_files(dataset_split, 'IMG')
         self.masks = self._get_files(dataset_split, 'GT')
         self.num_samples = len(self.images)
+
+        _img = Image.open(self.images[7]).convert('RGB')
+        _target = Image.open(self.masks[7]).convert('L')
+
+        _img, _target = preprocess(_img,
+                                _target,
+                                flip=True if self.train else False,
+                                scale=(0.5, 2.0) if self.train else None,
+                                crop=(self.crop_size, self.crop_size) if self.train else (512, 512))
+
+        print(_img)
+        exit()
         assert len(self.images) == len(self.masks)
 
 
@@ -42,7 +54,6 @@ class lpcvc(Dataset):
                                 flip=True if self.train else False,
                                 scale=(0.5, 2.0) if self.train else None,
                                 crop=(self.crop_size, self.crop_size) if self.train else (512, 512))
-        
         
         if self.transform is not None:
             _img = self.transform(_img)

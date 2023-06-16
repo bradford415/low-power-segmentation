@@ -1,3 +1,5 @@
+- Train model with DataParallel and save it as shown here https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-torch-nn-dataparallel-models, see if it removes the module. key error
+- Comment how to set up new model for solution
 - read through evaluation/main.py and understand why dice score is different each run
 - look through evlation.bash and get it to running
 - comment readme
