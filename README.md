@@ -15,14 +15,21 @@ TODO fill this out
 TODO: Fill this out
 
 	.
-	├── inference                 # Live inference for .onnx files
-	├── models                    # Train/test segmentation models (e.g., SwiftNet)
-	├── rgb_LiDAR_segmentation    # DeepLabV3+ with RGB/LiDAR fusion (written by Max in MATLAB)
-	├── scripts                   # Helper scripts disconnected from the pipeline
-	├── testing                   # Archive of files which were never integrated into the pipeline (these should not be used)
-	├── Dockerfile
-	├── docker_run.sh	      # Script to run the local docker container
-	└── environment.yml	      # File to setup the anaconda environment
+	├── configs                 # Live inference for .onnx files
+	├── data                    # Train/test segmentation models (e.g., SwiftNet)
+	├── datasets                # DeepLabV3+ with RGB/LiDAR fusion (written by Max in MATLAB)
+	├── evaluation              # Helper scripts disconnected from the pipeline
+	├── networks                # Archive of files which were never integrated into the pipeline (these should not be used)
+	├── quantization	    #
+	├── scripts	      	    # Script to run the local docker container
+ 	├── solution                #
+ 	├── trained-models	    #
+ 	├── utils		    #
+  	├── environment.yml	    # File to setup the anaconda environment
+ 	├── compress.sh		    #
+ 	├── run.pbs.sh		    #
+  	├── test.py		    #
+	└── train.py 	      	    # 
 
 
 ## Anaconda Environment Setup
@@ -53,12 +60,32 @@ python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
 
 ## Preparing the Trained Model for the Jetson Evaluation
-TODO: fill this out
+Follow these steps once you have a trained model and it is ready for Jetson evaluation.
 
-zip the ```solution``` directory and move it to the ```evaluation``` directory with
+1. Copy the trained model file ```.pt``` to the ```solution``` dir.
+1. Copy the model architecture (in ```networks```) to ```solution/utils```.
+1. In ```solution/main.py``` instantiate the model architecture and load the weights in ```main()```. Any additional preprocessing needed should be added to ```loadImageToTensor()``` function.
+
+Once the model is set up in the ```solution```` dir, zip the ```solution``` directory and move it to the ```evaluation``` directory with
 ```bash
 ./compress.sh
 ```
+
+__Before moving the solution to the Jetson, first test it locally to verify correctness.__
+
+Inside ```evaluation```, set up the ```test``` dir with the validation images (normally it would be the test images but they are private for this competition). The ```test``` dir should look as follows:
+ 	
+    	├── test                    
+    	│   ├── GT          # Ground truth labeled validation images
+    	│   └── IMG         # Raw RGB validation images
+    	└── 
+
+Inside the ```evaluation/evaluate.bash``` script, modify the following variables to the correct absolute paths
+1. ```path``` to path of ```evaluation``` dir
+2. ```testImagesDirectory``` to path of ```evaluation/test/IMG``` dir
+3. ```testGroundTruthImagesDirectory``` to path of ```evaluation/test/GT```
+
+TODO: Write instructions on how to run the solution locally
 
 ## Running the Project on the Palmetto Super Computer 
 ### Setting Up the PBS Script
