@@ -62,11 +62,11 @@ python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ## Preparing the Trained Model for the Jetson Evaluation
 Follow these steps once you have a trained model and it is ready for Jetson evaluation.
 
-1. Copy the trained model file ```.pt``` to the ```solution``` dir.
-1. Copy the model architecture (in ```networks```) to ```solution/utils```.
+1. Copy the trained model file ```.pt``` to the ```solution/``` dir.
+1. Copy the model architecture (in ```networks/```) to ```solution/utils```.
 1. In ```solution/main.py``` instantiate the model architecture and load the weights in ```main()```. Any additional preprocessing needed should be added to ```loadImageToTensor()``` function.
 
-Once the model is set up in the ```solution``` dir, zip the ```solution``` directory and move it to the ```evaluation``` directory with
+Once the model is set up in the ```solution/``` dir, zip the ```solution/``` directory and move it to the ```evaluation/``` directory with
 ```bash
 ./compress.sh
 ```
