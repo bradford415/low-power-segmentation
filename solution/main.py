@@ -68,29 +68,20 @@ def main() -> None:
     args: Namespace = getArgs()
 
     # NOTE: modelPath should be the path to your model in respect to your solution directory
-    modelPath: str = "model_best_miou_52-13.pt"
+    modelPath: str = "model_best_miou_51-20.pt"
 
     image_files: List[str] = os.listdir(args.input)
 
     with pkg_resources.resource_stream(__name__, modelPath) as model_file:
-        model: utils.ResNet() = utils.create_resnet101(pretrained=False, num_classes=14)#FANet = FANet()
-        #model = getattr(deeplabv3, 'create_resnet101')(
-        #    pretrained=False,
-        #    #device=device,
-        #    num_classes=14
-        #    )
+        #model: utils.ResNet() = utils.create_resnet101(pretrained=False, num_classes=14)#FANet = FANet()
+        model: utils.ResNet() = utils.create_resnet18(pretrained=False, num_classes=14)
+
         device = torch.device("cuda")
         model.to(device)
 
         weights = torch.load(model_file, map_location=device)
-        # MUST REMOVE THE FIRST 7 CHARS CREATED BY DATAPARALLEL, 
-        # NO WARNING WAS THROWN WHEN I SKIPPED THIS
-        state_dict = {k[7:]: v for k,
-                v in weights['model'].items()}
-        model.load_state_dict(
-                #state_dict=torch.load(f=model_file, map_location=torch.device("cuda")), strict=False
-                state_dict=state_dict, strict=False
-        )
+        # No longer need to remove 'module.' appended by DataParallel() when you save the state_dict with model.module.state_dict()
+        model.load_state_dict(state_dict=weights['model'], strict=False)
         model.eval()
         start, end = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
 

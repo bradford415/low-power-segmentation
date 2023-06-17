@@ -131,12 +131,10 @@ def train():
     if cfg['model']['backbone'] == 'resnet101':
         model = getattr(deeplabv3, 'create_resnet101')(
             pretrained=(not False),
-            device=device,
             num_classes=len(dataset_train.CLASSES))
     elif cfg['model']['backbone'] == 'resnet18':
         model = getattr(deeplabv3, 'create_resnet18')(
             pretrained=(not False),
-            device=device,
             num_classes=len(dataset_train.CLASSES))
     else:
         raise ValueError('Unknown backbone: {}'.format(cfg['model']['backbone']))
@@ -268,18 +266,18 @@ def train():
             best_miou_name += '.pt'
             torch.save({
                 'epoch': epoch + 1, # +1 because when loading a checkpoint you want to start at the next epoch
-                'model': model.state_dict(),
+                'model': model.module.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, best_miou_name)
-            if index > 1:
-                old_best_name = best_miou_name
+            #if index > 1:
+            #    old_best_name = best_miou_name
             
         print(f'epoch: {epoch+1}\t mIoU: {miou*100:.2f}\t average loss: {losses.avg:.2f}\n')
         # Save a checkpoint every 10 epochs
         if epoch % 10 == 9:
             torch.save({
                 'epoch': epoch + 1, # +1 because when loading a checkpoint you want to start at the next epoch
-                'model': model.state_dict(),
+                'model': model.module.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, f'{model_fpath}_epoch{epoch + 1}.pt')
 

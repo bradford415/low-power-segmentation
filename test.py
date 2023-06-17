@@ -91,6 +91,10 @@ def test():
         model = getattr(deeplabv3, 'create_resnet101')(
             pretrained=False,
             num_classes=len(dataset_test.CLASSES))
+    elif cfg['model']['backbone'] == 'resnet18':
+        model = getattr(deeplabv3, 'create_resnet18')(
+            pretrained=False,
+            num_classes=len(dataset_test.CLASSES))
     else:
         raise ValueError('Unknown backbone: {}'.format(cfg['model']['backbone']))
 
@@ -104,12 +108,14 @@ def test():
     print(f"Loading model {model_weights}")
     weights = torch.load(model_weights, map_location=device)
 
-    # Remove 'module.' appended by DataParallel()
-    #print(weights['model'])
-    state_dict = {k[7:]: v for k,
-                v in weights['model'].items()}
+    # No longer need to remove 'module.' appended by DataParallel() when you save the state_dict with model.module.state_dict()
     # Do not need to load optimizer state_dict because it is not used for inference
-    model.load_state_dict(state_dict)
+    #model.load_state_dict(state_dict)
+
+    #for param_tensor in weights.state_dict():
+    #    print(param_tensor, "\t")
+
+    model.load_state_dict(weights['model'])
 
     dataset_loader = torch.utils.data.DataLoader(dataset_test, **test_kwargs)
 
@@ -134,9 +140,6 @@ def test():
                 pred, target, len(dataset_test.CLASSES))
             # Keep running sum of intersection and union values of image
             # Inter and union are based on the prediction and groud truth mask
-            #print(inter)
-            #print(union)
-            #exit()
             inter_meter_miou.update(inter)
             inter_meter_dice.update(inter+inter)
             union_meter_miou.update(union)
