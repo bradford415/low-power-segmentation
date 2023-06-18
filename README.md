@@ -2,7 +2,6 @@
 TODO: Write the goal of this project
 
 ## Table of Contents
-TODO fill this out
 * [File Structure](#file-structure)
 * [Anaconda Environement Setup](#anaconda-environment-setup)
 * [Runng the Project Locally](#running-the-project-locally)
@@ -12,24 +11,26 @@ TODO fill this out
 * [Literature Review](#literature-review)
 
 ## File Structure
-TODO: Fill this out
+```solution/``` and ```evaluation/``` were taken from the official sample solution [here](https://github.com/lpcvai/23LPCVC_Segmentation_Track-Sample_Solution)
+
+```output/``` dir is created upon training a model for the frist time. It contains a ```train/``` which stores weights every 10 epochs and the model with the highest mIoU, config file used, and a training log. and ```inference/```
 
 	.
-	├── configs                 # Live inference for .onnx files
-	├── data                    # Train/test segmentation models (e.g., SwiftNet)
-	├── datasets                # DeepLabV3+ with RGB/LiDAR fusion (written by Max in MATLAB)
-	├── evaluation              # Helper scripts disconnected from the pipeline
-	├── networks                # Archive of files which were never integrated into the pipeline (these should not be used)
-	├── quantization	    #
-	├── scripts	      	    # Script to run the local docker container
- 	├── solution                #
- 	├── trained-models	    #
- 	├── utils		    #
+	├── configs                 # Configuration files for running different experiments
+	├── data                    # Location to store training and evaluation datasets
+	├── datasets                # PyTorch dataset classes
+	├── evaluation              # Location to run the final solution.pyz evaluation and score the project
+	├── networks                # Deep neural network architectures tested for this project
+	├── quantization	    # Experimental model quantization (not yet incorporated in the pipline)
+	├── scripts	      	    # Helper scripts disconnected from the pipeline
+ 	├── solution                # Location to create the final solution and zip to solution.pyz
+ 	├── trained-models	    # opy trained models here for easy access
+ 	├── utils		    # Helper files used in the pipeline like preprocessing and visualization
   	├── environment.yml	    # File to setup the anaconda environment
- 	├── compress.sh		    #
- 	├── run.pbs.sh		    #
-  	├── test.py		    #
-	└── train.py 	      	    # 
+ 	├── compress.sh		    # Used to compress the final solution/ dir into solution.pyz and move it to the evaluation dir
+ 	├── run.pbs		    # pbs script to run project on palmetto
+  	├── test.py		    # main file used to test a train model locally
+	└── train.py 	      	    # main file to train models locally
 
 
 ## Anaconda Environment Setup
@@ -85,7 +86,12 @@ Inside the ```evaluation/evaluate.bash``` script, modify the following variables
 2. ```testImagesDirectory``` to path of ```evaluation/test/IMG``` dir
 3. ```testGroundTruthImagesDirectory``` to path of ```evaluation/test/GT```
 
-TODO: Write instructions on how to run the solution locally
+Run the final evaluation with
+```bash
+./evaluate.bash solution.pyz
+```
+
+This will verify the solution is working and is most likely ready for the Jetson Nano evaluation. The score will probably be much higher because it is being run locally on a much more powerful GPU.
 
 ## Inferencing on the Jetson Nano
 
