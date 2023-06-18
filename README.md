@@ -27,7 +27,7 @@ TODO: Write the goal of this project
  	├── trained-models	    # opy trained models here for easy access
  	├── utils		    # Helper files used in the pipeline like preprocessing and visualization
   	├── environment.yml	    # File to setup the anaconda environment
- 	├── compress.sh		    # Used to compress the final solution/ dir into solution.pyz and move it to the evaluation dir
+ 	├── compress.sh		    # Used to compress the solution/ dir into solution.pyz & move it to the evaluation/ dir
  	├── run.pbs		    # pbs script to run project on palmetto
   	├── test.py		    # main file used to test a train model locally
 	└── train.py 	      	    # main file to train models locally
