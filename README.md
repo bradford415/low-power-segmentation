@@ -4,12 +4,12 @@ TODO: Write the goal of this project
 ## Table of Contents
 TODO fill this out
 * [File Structure](#file-structure)
-* [Local Setup and Development](#local-setup-and-development)
-* [Launching the Docker Container](#launching-the-docker-container)
-* [Features](#features)
-* [Deploying the Docker Container on the Husky](#deploying-the-docker-container-on-the-husky)
-* [Preparing Datsets](#preparing-datasets)
-* [Publications](#publications)
+* [Anaconda Environement Setup](#anaconda-environment-setup)
+* [Runng the Project Locally](#running-the-project-locally)
+* [Preparing the Trained Model for Jetson Nano Evaluation](#preparing-the-trained-model-for-jetson-nano-evaluation)
+* [Inferencing on the Jetson Nano](#inferencing-on-the-jetson-nano)
+* [Running the Project on the Palmetto Super Computer](#running-the-project-on-the-palmetto-super-computer)
+* [Literature Review](#literature-review)
 
 ## File Structure
 TODO: Fill this out
@@ -59,7 +59,7 @@ Run the ```test.py``` by specifying the desired configuartion file (```.yaml```)
 python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
 
-## Preparing the Trained Model for the Jetson Evaluation
+## Preparing the Trained Model for Jetson Nano Evaluation
 Follow these steps once you have a trained model and it is ready for Jetson evaluation.
 
 1. Copy the trained model file ```.pt``` to the ```solution/``` dir.
@@ -87,6 +87,9 @@ Inside the ```evaluation/evaluate.bash``` script, modify the following variables
 
 TODO: Write instructions on how to run the solution locally
 
+## Inferencing on the Jetson Nano
+
+
 ## Running the Project on the Palmetto Super Computer 
 ### Setting Up the PBS Script
 From a login node, create or modify a config file in ```configs``` directory with the desired hyperparameters, dataset, and weight file (if testing). _Be sure to keep a similar naming convention_. Next, modify the ```run.pbs``` file to use the Conda environment, the ```train.py``` or ```test.py``` file, and the config file you just created:
@@ -110,9 +113,6 @@ You can view the job status at any point using ```qstat -u <username>```
 ```bash
 qsub -I -q viprgs -l select=1:ncpus=20:ngpus=2:mem=128gb:gpu_model=a100,walltime=6:00:00
 ```
-
-## Inferecing on the Jetson Nano
-
 
 ## Literature Review
 
