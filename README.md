@@ -2,34 +2,35 @@
 TODO: Write the goal of this project
 
 ## Table of Contents
-TODO fill this out
 * [File Structure](#file-structure)
-* [Local Setup and Development](#local-setup-and-development)
-* [Launching the Docker Container](#launching-the-docker-container)
-* [Features](#features)
-* [Deploying the Docker Container on the Husky](#deploying-the-docker-container-on-the-husky)
-* [Preparing Datsets](#preparing-datasets)
-* [Publications](#publications)
+* [Anaconda Environement Setup](#anaconda-environment-setup)
+* [Runng the Project Locally](#running-the-project-locally)
+* [Preparing the Trained Model for Jetson Nano Evaluation](#preparing-the-trained-model-for-jetson-nano-evaluation)
+* [Inferencing on the Jetson Nano](#inferencing-on-the-jetson-nano)
+* [Running the Project on the Palmetto Super Computer](#running-the-project-on-the-palmetto-super-computer)
+* [Literature Review](#literature-review)
 
 ## File Structure
-TODO: Fill this out
+```solution/``` and ```evaluation/``` were taken from the official sample solution [here](https://github.com/lpcvai/23LPCVC_Segmentation_Track-Sample_Solution)
+
+```output/``` dir is created upon training a model for the frist time. It contains a ```train/``` which stores weights every 10 epochs and the model with the highest mIoU, config file used, and a training log. and ```inference/```
 
 	.
-	├── configs                 # Live inference for .onnx files
-	├── data                    # Train/test segmentation models (e.g., SwiftNet)
-	├── datasets                # DeepLabV3+ with RGB/LiDAR fusion (written by Max in MATLAB)
-	├── evaluation              # Helper scripts disconnected from the pipeline
-	├── networks                # Archive of files which were never integrated into the pipeline (these should not be used)
-	├── quantization	    #
-	├── scripts	      	    # Script to run the local docker container
- 	├── solution                #
- 	├── trained-models	    #
- 	├── utils		    #
+	├── configs                 # Configuration files for running different experiments
+	├── data                    # Location to store training and evaluation datasets
+	├── datasets                # PyTorch dataset classes
+	├── evaluation              # Location to run the final solution.pyz evaluation and score the project
+	├── networks                # Deep neural network architectures tested for this project
+	├── quantization	    # Experimental model quantization (not yet incorporated in the pipline)
+	├── scripts	      	    # Helper scripts disconnected from the pipeline
+ 	├── solution                # Location to create the final solution and zip to solution.pyz
+ 	├── trained-models	    # opy trained models here for easy access
+ 	├── utils		    # Helper files used in the pipeline like preprocessing and visualization
   	├── environment.yml	    # File to setup the anaconda environment
- 	├── compress.sh		    #
- 	├── run.pbs.sh		    #
-  	├── test.py		    #
-	└── train.py 	      	    # 
+ 	├── compress.sh		    # Used to compress the solution/ dir into solution.pyz & move it to the evaluation/ dir
+ 	├── run.pbs		    # pbs script to run project on palmetto
+  	├── test.py		    # main file used to test a train model locally
+	└── train.py 	      	    # main file to train models locally
 
 
 ## Anaconda Environment Setup
@@ -59,7 +60,7 @@ Run the ```test.py``` by specifying the desired configuartion file (```.yaml```)
 python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
 
-## Preparing the Trained Model for the Jetson Evaluation
+## Preparing the Trained Model for Jetson Nano Evaluation
 Follow these steps once you have a trained model and it is ready for Jetson evaluation.
 
 1. Copy the trained model file ```.pt``` to the ```solution/``` dir.
@@ -85,7 +86,15 @@ Inside the ```evaluation/evaluate.bash``` script, modify the following variables
 2. ```testImagesDirectory``` to path of ```evaluation/test/IMG``` dir
 3. ```testGroundTruthImagesDirectory``` to path of ```evaluation/test/GT```
 
-TODO: Write instructions on how to run the solution locally
+Run the final evaluation with
+```bash
+./evaluate.bash solution.pyz
+```
+
+This will verify the solution is working and is most likely ready for the Jetson Nano evaluation. The score will probably be much higher because it is being run locally on a much more powerful GPU.
+
+## Inferencing on the Jetson Nano
+
 
 ## Running the Project on the Palmetto Super Computer 
 ### Setting Up the PBS Script
@@ -110,9 +119,6 @@ You can view the job status at any point using ```qstat -u <username>```
 ```bash
 qsub -I -q viprgs -l select=1:ncpus=20:ngpus=2:mem=128gb:gpu_model=a100,walltime=6:00:00
 ```
-
-## Inferecing on the Jetson Nano
-
 
 ## Literature Review
 
