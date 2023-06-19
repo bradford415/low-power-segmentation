@@ -93,7 +93,29 @@ Run the final evaluation with
 
 This will verify the solution is working and is most likely ready for the Jetson Nano evaluation. The score will probably be much higher because it is being run locally on a much more powerful GPU.
 
+If the solution is working locally, push your final changes to the ```main``` branch of this project so they can be pulled to the Jetson. Due to size constraints on GitHub, ```solution.pyz``` will have to be rebuilt on the Jetson.
+
 ## Inferencing on the Jetson Nano
+These instructions assume the Jetson Nano already has Jetpack 4.6.3. As of 05/30/2023 if you flash with an SD card Jetpack 4.6.3 will be automatically installed (as well as the additional acceleration libraries like cuDNN). The alternative is to use the SDK Manger to flash the Jetson which requires Ubuntu 18.04.
+- [Flashing the Jetson Nano with an SD card](https://developer.nvidia.com/embedded/learn/jetson-ai-certification-programs#course_outline)
+
+### Setting up the Dependencies
+Pull the repository with
+```bash
+git clone https://github.com/bradford415/low-power-segmentation.git
+```
+Next, install the dependencies set by the competition rules found [here](https://github.com/lpcvai/23LPCVC_Segmentation_Track-Sample_Solution/blob/main/setup.bash)
+```bash
+./scripts/nano_setup.bash
+```
+
+### Running the Solution
+TODO: Write about how to save .pyz and download onto jetson (probably just google drive)
+Compress the ```solution/``` directory and move ```solution.pyz``` to ```evaluation/``` with
+```bash
+./compress.sh
+```
+TODO: Write how to get images
 
 
 ## Running the Project on the Palmetto Super Computer 
