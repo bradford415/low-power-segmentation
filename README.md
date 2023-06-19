@@ -93,7 +93,7 @@ Run the final evaluation with
 
 This will verify the solution is working and is most likely ready for the Jetson Nano evaluation. The score will probably be much higher because it is being run locally on a much more powerful GPU.
 
-If the solution is working locally, push your final changes to the ```main``` branch of this project so they can be pulled to the Jetson. Due to size constraints on GitHub, ```solution.pyz``` will have to be rebuilt on the Jetson.
+If the solution is working locally, push your final changes to the ```main``` branch of this project so they can be pulled to the Jetson. Due to size constraints on GitHub, upload ```solution.pyz``` to cloud storage (like google drive) then this can be downloaded on the Jetson Nano.
 
 ## Inferencing on the Jetson Nano
 These instructions assume the Jetson Nano already has Jetpack 4.6.3. As of 05/30/2023 if you flash with an SD card Jetpack 4.6.3 will be automatically installed (as well as the additional acceleration libraries like cuDNN). The alternative is to use the SDK Manger to flash the Jetson which requires Ubuntu 18.04.
@@ -110,12 +110,14 @@ Next, install the dependencies set by the competition rules found [here](https:/
 ```
 
 ### Running the Solution
-TODO: Write about how to save .pyz and download onto jetson (probably just google drive)
-Compress the ```solution/``` directory and move ```solution.pyz``` to ```evaluation/``` with
+Everytime there is a new solution, pull the repository changes
 ```bash
-./compress.sh
+git pull
 ```
-TODO: Write how to get images
+
+Next, from google drive (or wherever the ```solution.pyz``` is stored) download the ```solution.pyz``` file and move it to the ```evaluation/``` directory.
+
+TODO: Write how to get images and run the solution
 
 
 ## Running the Project on the Palmetto Super Computer 
