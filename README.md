@@ -117,7 +117,17 @@ git pull
 
 Next, from google drive (or wherever the ```solution.pyz``` is stored) download the ```solution.pyz``` file and move it to the ```evaluation/``` directory.
 
-TODO: Write how to get images and run the solution
+Inside ```evaluation```, set up the ```test``` dir with the validation images (normally it would be the test images but they are private for this competition). The ```test``` dir should look as follows:
+ 	
+    	├── test                    
+    	│   ├── GT          # Ground truth labeled validation images
+    	│   └── IMG         # Raw RGB validation images
+    	└── 
+
+Run the solution with
+```bash
+./evaluate.bash <solution.pyz>
+```
 
 
 ## Running the Project on the Palmetto Super Computer 
