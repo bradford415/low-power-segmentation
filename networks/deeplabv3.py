@@ -22,8 +22,6 @@ import torch.nn.functional as F
 from torchvision import models
 
 # List of backbones
-# Double underscore is just naming convention, 
-# allows you to use all as a variable and ignores the 'all' keyword/function
 __all___ = ['resnet101'] 
 
 class ASPP(nn.Module):
