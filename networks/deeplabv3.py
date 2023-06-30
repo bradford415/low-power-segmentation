@@ -22,7 +22,7 @@ import torch.nn.functional as F
 from torchvision import models
 
 # List of backbones
-__all___ = ['resnet101'] 
+__all___ = ['create_resnet101', 'create_resnet18'] 
 
 class ASPP(nn.Module):
 
