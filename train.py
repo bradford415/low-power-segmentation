@@ -28,6 +28,7 @@ from datasets import VOCSegmentation
 from datasets import Cityscapes
 from datasets import Rellis3D
 from datasets import lpcvc
+from datasets import ade
 
 
 parser = argparse.ArgumentParser()
@@ -109,14 +110,19 @@ def train():
         dataset_val = Cityscapes(cfg['dataset']['root'],
                                  train=False)
     elif cfg['dataset']['dataset'] == 'rellis':
-        dataset_train = Rellis3D('data/rellis',
+        dataset_train = Rellis3D(cfg['dataset']['root'],
                            train=True, crop_size=cfg['train']['crop_size'])
-        dataset_val = Rellis3D('data/rellis',
+        dataset_val = Rellis3D(cfg['dataset']['root'],
                            train=False)
     elif cfg['dataset']['dataset'] == 'lpcvc':
         dataset_train = lpcvc(cfg['dataset']['root'],
                            train=True, crop_size=cfg['train']['crop_size'])
         dataset_val = lpcvc(cfg['dataset']['root'],
+                           train=False)
+    elif cfg['dataset']['dataset'] == 'ade':
+        dataset_train = ade(cfg['dataset']['root'],
+                           train=True, crop_size=cfg['train']['crop_size'])
+        dataset_val = ade(cfg['dataset']['root'],
                            train=False)
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
