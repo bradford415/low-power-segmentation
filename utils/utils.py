@@ -81,7 +81,7 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     The mean and standard deviation from the ImageNet dataset are used because we pretrain
     deeplab on ImageNet.
 
-    Training applies crop, flip, resize, and normalization
+    Training applies random crop, flip, resize, and normalization
     """
     if flip:
         if random.random() < 0.5:
@@ -107,8 +107,8 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     
     if crop:
         h, w = image.shape[1], image.shape[2]
-        pad_tb = max(0, crop[0] - h)
-        pad_lr = max(0, crop[1] - w)
+        pad_tb = max(0, crop[0] - h) # Try to only crop within the image and not the padding
+        pad_lr = max(0, crop[1] - w) # May crop the padding if the image size is smaller than the crop size
         image = torch.nn.ZeroPad2d((0, pad_lr, 0, pad_tb))(image)
         mask = torch.nn.ConstantPad2d((0, pad_lr, 0, pad_tb), 255)(mask)
 
