@@ -8,11 +8,12 @@ import random
 import glob
 from PIL import Image
 from utils import preprocess
+import numpy as np
 
 
 class ade(Dataset):
 
-  def __init__(self, root, train=True, transform=None, target_transform=None, crop_size=None):
+  def __init__(self, root, num_classes, train=True, transform=None, target_transform=None, crop_size=None):
     self.root = root
     self.transform = transform
     self.target_transform = target_transform
@@ -23,10 +24,23 @@ class ade(Dataset):
     self.images = self._get_files(dataset_split, 'images')
     self.masks = self._get_files(dataset_split, 'annotations')
     self.num_samples = len(self.images)
+    self.num_classes = num_classes
 
   def __getitem__(self, index):
     _img = Image.open(self.images[index]).convert('RGB')
     _target = Image.open(self.masks[index])
+
+    print('here12')
+    print(np.unique(np.array(_target)))
+    print(np.array(_target).shape)
+
+    ## ############     TODO     ## ############
+    ## understand where the 255 comes from after preprocessing, think its constantpad2d:
+    ## https://pytorch.org/docs/stable/generated/torch.nn.ConstantPad2d.html
+    ## Then convert labels as defined here under reduce_zero_label:
+    ##https://mmsegmentation.readthedocs.io/en/latest/advanced_guides/datasets.html
+    ## Already implemented just need to test
+
 
     _img, _target = preprocess(_img, _target,
                                flip=True if self.train else False,
@@ -39,12 +53,30 @@ class ade(Dataset):
     if self.target_transform is not None:
       _target = self.target_transform(_target)
 
+    # Background class and 'other objects' are labeled 0 for ade20k (different from Cityscapes which uses 255)
+    # A value of 255 still occurs after preprocessing due to the padding (torch.nn.ConstantPad2d)
+    # Therefore, when we set the 0 pixels to 255 by subtracting 1, the padded pixels will become 254 and we must set them
+    # back to 255
+    # We must also ensure theses are unsigned 8 bit values so they range from 0-255 (0 - 1 = 255)
+
+  # uncomment this tomorrow
+    #_target[_target == 0] = 255
+    #_target = _target - 1
+    #_target[_target == 254] = 255
+    #_target = _target - 1
+    print("here4444")
+    print(np.unique(_target))
+    print(_target.shape)
+    print("done")
+    exit()
+
     return _img, _target
 
   def _get_files(self, dataset_split, data_type):
     dataset_path = os.path.join(self.root, data_type, dataset_split)
     
-    filenames = glob.glob(f'{self.root}/{data_type}/{dataset_split}/*.png')
+    file_end = '.png' if data_type == 'annotations' else '.jpg'
+    filenames = glob.glob(f'{self.root}/{data_type}/{dataset_split}/*{file_end}')
     return sorted(filenames)
 
   def __len__(self):

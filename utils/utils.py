@@ -88,6 +88,7 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
             image = image.transpose(Image.FLIP_LEFT_RIGHT)
             mask = mask.transpose(Image.FLIP_LEFT_RIGHT)
 
+    # Resize image dimensions by a random factor between 0.5-2.0
     if scale:
         w, h = image.size
         rand_log_scale = math.log(scale[0], 2) + random.random() * (
@@ -110,7 +111,7 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
         pad_tb = max(0, crop[0] - h) # Try to only crop within the image and not the padding
         pad_lr = max(0, crop[1] - w) # May crop the padding if the image size is smaller than the crop size
         image = torch.nn.ZeroPad2d((0, pad_lr, 0, pad_tb))(image)
-        mask = torch.nn.ConstantPad2d((0, pad_lr, 0, pad_tb), 255)(mask)
+        mask = torch.nn.ConstantPad2d((0, pad_lr, 0, pad_tb), 255)(mask) # 255 padding so we can ignore this index in the loss function
 
         h, w = image.shape[1], image.shape[2]
         i = random.randint(0, h - crop[0])
