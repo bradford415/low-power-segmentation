@@ -9,7 +9,7 @@ dataset:
 model:
   backbone: resnet101
 train:
-  batch_size: 8
+  batch_size: 2
   shuffle: true
   crop_size: 512 # SegFormer uses 512 and ViT-Adapter uses 896
   start_epoch: 0

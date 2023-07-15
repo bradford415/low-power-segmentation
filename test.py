@@ -83,7 +83,7 @@ def test():
         dataset_test = lpcvc(cfg['dataset']['root'],
                              train=False, crop_size=None)#crop_size=args.crop_size)
     elif cfg['dataset']['dataset'] == 'ade':
-        dataset_test = ade(cfg['dataset']['root'],
+        dataset_test = ade(cfg['dataset']['root'], num_classes=150,
                              train=False, crop_size=None)#crop_size=args.crop_size) 
         
     else:

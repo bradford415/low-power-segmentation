@@ -57,6 +57,7 @@ class VOCSegmentation(Dataset):
                 self.images.append(_image)
                 self.masks.append(_mask)
         self.num_samples = len(self.images)
+        self.num_classes = len(self.CLASSES)
 
     def __getitem__(self, index):
         _img = Image.open(self.images[index]).convert('RGB')

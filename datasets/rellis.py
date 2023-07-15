@@ -77,6 +77,7 @@ class Rellis3D(Dataset):
                               32: 4,
                               33: 17,
                               34: 18}
+        self.num_classes = len(self.CLASSES)
 
     def convert_label(self, label, inverse=False):
         """Transform mask labels to class values 0-34 => 0-18

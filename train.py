@@ -22,7 +22,7 @@ from datetime import datetime
 
 
 # Import local files
-from networks import deeplabv3
+from networks import create_resnet101, create_resnet18
 from utils import AverageMeter, inter_and_union
 from datasets import VOCSegmentation
 from datasets import Cityscapes
@@ -120,9 +120,9 @@ def train():
         dataset_val = lpcvc(cfg['dataset']['root'],
                            train=False)
     elif cfg['dataset']['dataset'] == 'ade':
-        dataset_train = ade(cfg['dataset']['root'],
+        dataset_train = ade(cfg['dataset']['root'], cfg['dataset']['num_classes'],
                            train=True, crop_size=cfg['train']['crop_size'])
-        dataset_val = ade(cfg['dataset']['root'],
+        dataset_val = ade(cfg['dataset']['root'], cfg['dataset']['num_classes'],
                            train=False)
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
@@ -135,13 +135,10 @@ def train():
     # I am not sure the advantage over this rather than just calling the function itself
     # w/o getattr()
     if cfg['model']['backbone'] == 'resnet101':
-        model = getattr(deeplabv3, 'create_resnet101')(
-            pretrained=(not False),
-            num_classes=len(dataset_train.CLASSES))
+        model = create_resnet101(pretrained=(True), num_classes=dataset_train.num_classes)
     elif cfg['model']['backbone'] == 'resnet18':
-        model = getattr(deeplabv3, 'create_resnet18')(
-            pretrained=(not False),
-            num_classes=len(dataset_train.CLASSES))
+        model = create_resnet18(pretrained=(True), num_classes=dataset_train.num_classes)
+
     else:
         raise ValueError('Unknown backbone: {}'.format(cfg['model']['backbone']))
 
@@ -230,9 +227,16 @@ def train():
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             outputs = model(data)
+            print("\nNew batch")
+            print('target')
+            print(target.shape)
+            print(torch.unique(target))
+            print(outputs.shape)
+            #print(outputs[0][0])
             loss = criterion(outputs, target)
-            if np.isnan(loss.item()) or np.isinf(loss.item()):
-                pdb.set_trace()
+            print(loss)
+            #if np.isnan(loss.item()) or np.isinf(loss.item()):
+            #    pdb.set_trace()
             # Keep track of running loss
             losses.update(loss.item(), cfg['train']['batch_size'])
 
