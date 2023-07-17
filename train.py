@@ -227,16 +227,15 @@ def train():
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             outputs = model(data)
-            print("\nNew batch")
-            print('target')
-            print(target.shape)
-            print(torch.unique(target))
-            print(outputs.shape)
+            #print('target')
+            #print(target.shape)
+            #print(torch.unique(target))
+            #print(outputs.shape)
             #print(outputs[0][0])
             loss = criterion(outputs, target)
-            print(loss)
-            #if np.isnan(loss.item()) or np.isinf(loss.item()):
-            #    pdb.set_trace()
+            #print(loss)
+            if np.isnan(loss.item()) or np.isinf(loss.item()):
+                pdb.set_trace()
             # Keep track of running loss
             losses.update(loss.item(), cfg['train']['batch_size'])
 
