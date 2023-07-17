@@ -30,9 +30,11 @@ class ade(Dataset):
     _img = Image.open(self.images[index]).convert('RGB')
     _target = Image.open(self.masks[index])
 
-    print('here12')
-    print(np.unique(np.array(_target)))
-    print(np.array(_target).shape)
+    #print('here12')
+    #print(np.unique(np.array(_target)))
+    #print(np.array(_target).shape)
+#
+    #print(np.savetxt('before.txt', np.array(_target)))
 
     ## ############     TODO     ## ############
     ## understand where the 255 comes from after preprocessing, think its constantpad2d:
@@ -59,16 +61,15 @@ class ade(Dataset):
     # back to 255
     # We must also ensure theses are unsigned 8 bit values so they range from 0-255 (0 - 1 = 255)
 
-  # uncomment this tomorrow
-    #_target[_target == 0] = 255
-    #_target = _target - 1
-    #_target[_target == 254] = 255
-    #_target = _target - 1
-    print("here4444")
-    print(np.unique(_target))
-    print(_target.shape)
-    print("done")
-    exit()
+    _target[_target == 0] = 255
+    _target = _target - 1
+    _target[_target == 254] = 255
+    #print("here4444")
+    #print(np.unique(_target))
+    #print(_target.shape)
+    #print(np.savetxt('after.txt',_target))
+    #print("done")
+    #exit()
 
     return _img, _target
 
