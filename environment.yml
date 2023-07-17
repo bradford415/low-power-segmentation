@@ -1,6 +1,6 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: low-power
+name: low-power3.8
 channels:
   - defaults
 dependencies:
@@ -8,9 +8,11 @@ dependencies:
   - pip
   - pandas
   - matplotlib
-  - opencv-python
   - imageio
   - pip:
     - pillow
     - pyyaml
     - tqdm
+    - opencv-python
+
+
