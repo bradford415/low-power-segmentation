@@ -34,9 +34,15 @@ TODO: Write the goal of this project
 
 
 ## Anaconda Environment Setup
+_Note: The competition uses python3.6 and there is no direct way to install python3.6 through a conda yaml file so we must downgrade the conda environment to python3.6_
 ```bash
 conda env create -f environment.yml
 conda activate low-power
+conda install python=3.6
+
+
+conda create -n low-power python=3.6
+pip install -r requirements.txt
 pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
@@ -55,7 +61,7 @@ python train.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ### Test
 Copy the trained model (```.pt```) into the ```trained-models``` directory and modify the ```model_path``` variable in the config file to the name of the trained model
 
-Run the ```test.py``` by specifying the desired configuartion file (```.yaml```)
+Run the ```test.py``` by specifying the desired configuration file (```.yaml```)
 ```bash
 python test.py --cfg configs/deeplabv3/deeplabv3_cityscapes_base.yaml
 ```
