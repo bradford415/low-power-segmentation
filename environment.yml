@@ -1,6 +1,6 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: low-power3.8
+name: low-power
 channels:
   - defaults
 dependencies:
