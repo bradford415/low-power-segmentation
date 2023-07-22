@@ -13,6 +13,6 @@ dependencies:
     - pillow
     - pyyaml
     - tqdm
-    - opencv-python
+    - opencv-python==4.6.0.66
 
 
