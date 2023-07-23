@@ -256,7 +256,7 @@ def train():
                 pred = pred.cpu()
                 target = target.cpu()
                 inter, union = inter_and_union(
-                    pred, target, len(dataset_train.CLASSES))
+                    pred, target, dataset_train.num_classes)
                 # Keep running sum of intersection and union values of image
                 # Inter and union are based on the prediction and groud truth mask
                 inter_meter.update(inter)
