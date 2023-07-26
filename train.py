@@ -227,13 +227,7 @@ def train():
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             outputs = model(data)
-            #print('target')
-            #print(target.shape)
-            #print(torch.unique(target))
-            #print(outputs.shape)
-            #print(outputs[0][0])
             loss = criterion(outputs, target)
-            #print(loss)
             if np.isnan(loss.item()) or np.isinf(loss.item()):
                 pdb.set_trace()
             # Keep track of running loss
@@ -249,6 +243,8 @@ def train():
         print('Evaluating on validation set...')
         with torch.inference_mode():
             for index, (data, target) in enumerate(loader_val):
+                #print(data.shape)
+                #print(target.shape)
                 data, target = data.to(device), target.to(device)
                 outputs = model(data)
                 _, pred = torch.max(outputs, 1)

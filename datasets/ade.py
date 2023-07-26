@@ -30,24 +30,10 @@ class ade(Dataset):
     _img = Image.open(self.images[index]).convert('RGB')
     _target = Image.open(self.masks[index])
 
-    #print('here12')
-    #print(np.unique(np.array(_target)))
-    #print(np.array(_target).shape)
-#
-    #print(np.savetxt('before.txt', np.array(_target)))
-
-    ## ############     TODO     ## ############
-    ## understand where the 255 comes from after preprocessing, think its constantpad2d:
-    ## https://pytorch.org/docs/stable/generated/torch.nn.ConstantPad2d.html
-    ## Then convert labels as defined here under reduce_zero_label:
-    ##https://mmsegmentation.readthedocs.io/en/latest/advanced_guides/datasets.html
-    ## Already implemented just need to test
-
-
     _img, _target = preprocess(_img, _target,
                                flip=True if self.train else False,
                                scale=(0.5, 2.0) if self.train else None,
-                               crop=(self.crop_size, self.crop_size) if self.train else (1025, 2049))
+                               crop=(self.crop_size, self.crop_size) if self.train else self.crop_size) # if eval, self.crop_size=None (original image size)
 
     if self.transform is not None:
       _img = self.transform(_img)
