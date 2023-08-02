@@ -17,7 +17,7 @@ from pathlib import Path
 from datetime import datetime
 
 # Import local files
-from networks import deeplabv3
+from networks import create_resnet101, create_resnet18
 from utils import AverageMeter, inter_and_union
 from utils import colorize, color_maps, labels
 from datasets import VOCSegmentation
@@ -90,13 +90,9 @@ def test():
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
 
     if cfg['model']['backbone'] == 'resnet101':
-        model = getattr(deeplabv3, 'create_resnet101')(
-            pretrained=False,
-            num_classes=len(dataset_test.CLASSES))
+        model = create_resnet101(pretrained=False, num_classes=dataset_test.num_classes)
     elif cfg['model']['backbone'] == 'resnet18':
-        model = getattr(deeplabv3, 'create_resnet18')(
-            pretrained=False,
-            num_classes=len(dataset_test.CLASSES))
+        model = create_resnet18(pretrained=False, num_classes=dataset_test.num_classes)
     else:
         raise ValueError('Unknown backbone: {}'.format(cfg['model']['backbone']))
 
@@ -139,7 +135,7 @@ def test():
                 colorize(img_path, pred, image_name, cmap, color_labels)
             print('eval: {0}/{1}'.format(index + 1, len(dataset_test)))
             inter, union = inter_and_union(
-                pred, target, len(dataset_test.CLASSES))
+                pred, target, dataset_test.num_classes)
             # Keep running sum of intersection and union values of image
             # Inter and union are based on the prediction and groud truth mask
             inter_meter_miou.update(inter)
@@ -147,16 +143,14 @@ def test():
             union_meter_miou.update(union)
             union_meter_dice.update(union+inter)
 
-        print(inter_meter_miou.sum)
         iou = inter_meter_miou.sum / (union_meter_miou.sum + 1e-10) # 1e-10 is used to prevent division by 0
         dice = inter_meter_dice.sum / (union_meter_dice.sum + 1e-10)
-        print(dice)
         # Print and save IoU per class and final mIoU score
         with open(os.path.join(model_path, 'metrics.txt'), 'w') as file:
             for i, val in enumerate(iou):
-                print('IoU {0}: {1:.2f}'.format(dataset_test.CLASSES[i], val * 100))
+                print('IoU {0}: {1:.2f}'.format(color_labels[i], val * 100))
                 file.write('IoU {0}: {1:.2f}\n'.format(
-                    dataset_test.CLASSES[i], val * 100))
+                    color_labels[i], val * 100))
             print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
             print('Mean Dice: {0:.2f}'.format(dice.sum()/14))
             file.write('Mean IoU: {0:.2f}'.format(iou.mean() * 100))

@@ -4,7 +4,7 @@ gpus: [0]
 workers: 4
 dataset:
   dataset: ade
-  root: /home/bselee/datasets/ADEChallengeData2016 # rel or abs path to the dataset root where the training/validation images are
+  root: /home/bselee/datasets/ADEChallengeData2016_test # rel or abs path to the dataset root where the training/validation images are
   num_classes: 150
 model:
   backbone: resnet101
@@ -24,6 +24,6 @@ train:
 test:
   batch_size: 1
   shuffle: false
-  model_path: 'trained-models/model_best_miou_26-56.pt'
+  model_path: 'trained-models/model_best_miou_27-80.pt'
   save_images: True
 

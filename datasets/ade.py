@@ -50,12 +50,6 @@ class ade(Dataset):
     _target[_target == 0] = 255
     _target = _target - 1
     _target[_target == 254] = 255
-    #print("here4444")
-    #print(np.unique(_target))
-    #print(_target.shape)
-    #print(np.savetxt('after.txt',_target))
-    #print("done")
-    #exit()
 
     return _img, _target
 
