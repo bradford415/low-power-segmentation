@@ -30,6 +30,7 @@ class lpcvc(Dataset):
         self.images = self._get_files(dataset_split, 'IMG')
         self.masks = self._get_files(dataset_split, 'GT')
         self.num_samples = len(self.images)
+        self.num_classes = len(self.CLASSES)
 
         assert len(self.images) == len(self.masks)
 

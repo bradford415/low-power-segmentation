@@ -22,12 +22,13 @@ from datetime import datetime
 
 
 # Import local files
-from networks import deeplabv3
+from networks import create_resnet101, create_resnet18
 from utils import AverageMeter, inter_and_union
 from datasets import VOCSegmentation
 from datasets import Cityscapes
 from datasets import Rellis3D
 from datasets import lpcvc
+from datasets import ade
 
 
 parser = argparse.ArgumentParser()
@@ -109,14 +110,19 @@ def train():
         dataset_val = Cityscapes(cfg['dataset']['root'],
                                  train=False)
     elif cfg['dataset']['dataset'] == 'rellis':
-        dataset_train = Rellis3D('data/rellis',
+        dataset_train = Rellis3D(cfg['dataset']['root'],
                            train=True, crop_size=cfg['train']['crop_size'])
-        dataset_val = Rellis3D('data/rellis',
+        dataset_val = Rellis3D(cfg['dataset']['root'],
                            train=False)
     elif cfg['dataset']['dataset'] == 'lpcvc':
         dataset_train = lpcvc(cfg['dataset']['root'],
                            train=True, crop_size=cfg['train']['crop_size'])
         dataset_val = lpcvc(cfg['dataset']['root'],
+                           train=False)
+    elif cfg['dataset']['dataset'] == 'ade':
+        dataset_train = ade(cfg['dataset']['root'], cfg['dataset']['num_classes'],
+                           train=True, crop_size=cfg['train']['crop_size'])
+        dataset_val = ade(cfg['dataset']['root'], cfg['dataset']['num_classes'],
                            train=False)
     else:
         raise ValueError('Unknown dataset: {}'.format(cfg['dataset']['dataset']))
@@ -129,13 +135,10 @@ def train():
     # I am not sure the advantage over this rather than just calling the function itself
     # w/o getattr()
     if cfg['model']['backbone'] == 'resnet101':
-        model = getattr(deeplabv3, 'create_resnet101')(
-            pretrained=(not False),
-            num_classes=len(dataset_train.CLASSES))
+        model = create_resnet101(pretrained=(True), num_classes=dataset_train.num_classes)
     elif cfg['model']['backbone'] == 'resnet18':
-        model = getattr(deeplabv3, 'create_resnet18')(
-            pretrained=(not False),
-            num_classes=len(dataset_train.CLASSES))
+        model = create_resnet18(pretrained=(True), num_classes=dataset_train.num_classes)
+
     else:
         raise ValueError('Unknown backbone: {}'.format(cfg['model']['backbone']))
 
@@ -240,6 +243,8 @@ def train():
         print('Evaluating on validation set...')
         with torch.inference_mode():
             for index, (data, target) in enumerate(loader_val):
+                #print(data.shape)
+                #print(target.shape)
                 data, target = data.to(device), target.to(device)
                 outputs = model(data)
                 _, pred = torch.max(outputs, 1)
@@ -247,7 +252,7 @@ def train():
                 pred = pred.cpu()
                 target = target.cpu()
                 inter, union = inter_and_union(
-                    pred, target, len(dataset_train.CLASSES))
+                    pred, target, dataset_train.num_classes)
                 # Keep running sum of intersection and union values of image
                 # Inter and union are based on the prediction and groud truth mask
                 inter_meter.update(inter)

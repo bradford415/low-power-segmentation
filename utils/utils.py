@@ -81,20 +81,21 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     The mean and standard deviation from the ImageNet dataset are used because we pretrain
     deeplab on ImageNet.
 
-    Training applies crop, flip, resize, and normalization
+    Training applies random crop, flip, resize, and normalization
     """
     if flip:
         if random.random() < 0.5:
             image = image.transpose(Image.FLIP_LEFT_RIGHT)
             mask = mask.transpose(Image.FLIP_LEFT_RIGHT)
 
+    # Resize image dimensions by a random factor between 0.5-2.0
     if scale:
         w, h = image.size
         rand_log_scale = math.log(scale[0], 2) + random.random() * (
             math.log(scale[1], 2) - math.log(scale[0], 2))
         random_scale = math.pow(2, rand_log_scale)
         new_size = (int(round(w * random_scale)), int(round(h * random_scale)))
-        image = image.resize(new_size, Image.ANTIALIAS)
+        image = image.resize(new_size, Image.LANCZOS)
         mask = mask.resize(new_size, Image.NEAREST)
 
     data_transforms = transforms.Compose([
@@ -107,10 +108,10 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     
     if crop:
         h, w = image.shape[1], image.shape[2]
-        pad_tb = max(0, crop[0] - h)
-        pad_lr = max(0, crop[1] - w)
+        pad_tb = max(0, crop[0] - h) # Try to only crop within the image and not the padding
+        pad_lr = max(0, crop[1] - w) # May crop the padding if the image size is smaller than the crop size
         image = torch.nn.ZeroPad2d((0, pad_lr, 0, pad_tb))(image)
-        mask = torch.nn.ConstantPad2d((0, pad_lr, 0, pad_tb), 255)(mask)
+        mask = torch.nn.ConstantPad2d((0, pad_lr, 0, pad_tb), 255)(mask) # 255 padding so we can ignore this index in the loss function
 
         h, w = image.shape[1], image.shape[2]
         i = random.randint(0, h - crop[0])

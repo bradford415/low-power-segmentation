@@ -1,0 +1,29 @@
+cudnn:
+  benchmark: true
+gpus: [0]
+workers: 4
+dataset:
+  dataset: ade
+  root: /home/bselee/datasets/ADEChallengeData2016_test # rel or abs path to the dataset root where the training/validation images are
+  num_classes: 150
+model:
+  backbone: resnet101
+train:
+  batch_size: 2
+  shuffle: true
+  crop_size: 512 # SegFormer uses 512 and ViT-Adapter uses 896
+  start_epoch: 0
+  end_epoch: 12 #200
+  optimizer: sgd
+  base_lr: 0.007
+  last_mult: 1.0
+  momentum: 0.9
+  weight_decay: 0.0001
+  ignore_label: 255
+  resume: False
+test:
+  batch_size: 1
+  shuffle: false
+  model_path: 'trained-models/model_best_miou_27-80.pt'
+  save_images: True
+
